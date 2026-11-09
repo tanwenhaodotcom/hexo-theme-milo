@@ -19,3 +19,19 @@ toc:
 comment:
   disqus:
     shortname: ''
+
+# Social image: absolute URL or site-local path; falls back to avatar, then bundled PNG.
+seo:
+  image: ''
+# Built-in Atom feed; existing site feed generator takes precedence.
+feed:
+  enable: true
+  limit: 20
+
+# Optional native image lightbox on article pages; front matter lightbox: false opts out.
+reading:
+  lightbox: false
+
+# Keep recent posts and categories sticky in the two-column layout.
+sidebar:
+  sticky: true

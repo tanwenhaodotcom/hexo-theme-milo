@@ -1,0 +1,9 @@
+<main id="main" class="not-found">
+  <p class="not-found-code">404</p>
+  <h1>你在寻找什么？</h1>
+  <p>这个页面可能已被删除、移动，或链接地址有误。试试返回首页，或搜索你感兴趣的文章。</p>
+  <div class="not-found-actions">
+    <a class="primary" href="<%= url_for('/') %>">返回首页</a>
+    <% if(theme.search.enable){ %><a class="not-found-secondary" href="<%= url_for('/search/') %>">搜索文章</a><% } %>
+  </div>
+</main>

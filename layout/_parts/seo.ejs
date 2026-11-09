@@ -1,0 +1,3 @@
+<% for(const [property,value] of Object.entries({'og:title':seo.title,'og:type':seo.type,'og:url':seo.url,'og:description':seo.description,'og:image':seo.image,'og:site_name':config.title})){ %><meta property="<%= property %>" content="<%= value %>"><% } %>
+<% for(const [name,value] of Object.entries({'twitter:card':'summary_large_image','twitter:title':seo.title,'twitter:description':seo.description,'twitter:image':seo.image})){ %><meta name="<%= name %>" content="<%= value %>"><% } %>
+<% milo_feeds().forEach(feed=>{ %><link rel="alternate" type="<%= feed.type %>" title="<%= config.title %>" href="<%= full_url_for(feed.path) %>"><% }); %>

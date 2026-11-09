@@ -1,6 +1,6 @@
 {
   "name": "hexo-theme-milo",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "A calm, responsive Hexo theme with native search and reading navigation",
   "license": "MIT",
   "keywords": [
@@ -12,7 +12,9 @@
     "node": ">=18"
   },
   "scripts": {
-    "check": "node --check scripts/milo.js && node --check source/js/milo.js"
+    "check": "node --check scripts/milo.js && node --check source/js/milo.js && node --check source/js/reading.js",
+    "test": "node --test test/*.test.js",
+    "test:browser": "node test/browser.cjs"
   },
   "files": [
     "layout",
@@ -30,5 +32,19 @@
     "type": "git",
     "url": "https://github.com/tanwenhaodotcom/hexo-theme-milo.git"
   },
-  "homepage": "https://github.com/tanwenhaodotcom/hexo-theme-milo#readme"
+  "homepage": "https://github.com/tanwenhaodotcom/hexo-theme-milo#readme",
+  "dependencies": {
+    "hexo-util": "^3.3.0 || ^4.0.0",
+    "image-size": "^2.0.2"
+  },
+  "devDependencies": {
+    "hexo": "^8.0.0",
+    "hexo-renderer-ejs": "^2.0.0",
+    "hexo-renderer-marked": "^7.0.0",
+    "hexo-generator-index": "^4.0.0",
+    "hexo-generator-archive": "^2.0.0",
+    "hexo-generator-category": "^2.0.0",
+    "hexo-generator-tag": "^2.0.0",
+    "jsdom": "^26.0.0"
+  }
 }
