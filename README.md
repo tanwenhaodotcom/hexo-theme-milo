@@ -15,7 +15,7 @@ A clean, independent Hexo theme written from scratch. No Suka templates, styles,
 
 需要 Node.js 18+、Hexo 7/8，以及站点已安装 hexo-renderer-ejs、hexo-renderer-marked、hexo-generator-index、hexo-generator-archive、hexo-generator-category、hexo-generator-tag。
 
-1. 把本仓库放到博客 themes/milo 目录。
+1. 在博客根目录执行：`git clone https://github.com/tanwenhaodotcom/hexo-theme-milo.git themes/milo`。
 2. 站点 _config.yml 设置 theme: milo。
 3. 从 _config.yml.example 复制必要选项到博客根目录 _config.milo.yml。
 4. 执行 hexo clean 和 hexo generate；hexo server 本地预览。
@@ -36,7 +36,7 @@ search.enable 关闭时隐藏搜索入口且不生成 search.json。comment.disq
 
 layout/ 存放 EJS 模板；scripts/milo.js 注册字数 helper 和搜索生成器；source/css/milo.css 为独立样式；source/js/milo.js 为浏览器交互。没有构建步骤或主题专属 npm 依赖。
 
-此项目尚未上传 GitHub，安装地址在仓库建立后补充。
+项目仓库：https://github.com/tanwenhaodotcom/hexo-theme-milo
 
 ## License
 
