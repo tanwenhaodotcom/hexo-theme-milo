@@ -1,0 +1,14 @@
+# Copy to your Hexo site as _config.milo.yml
+uiux:
+  slogan: Your words, your space.
+img:
+  avatar: /images/avatar.jpg
+head:
+  favicon:
+    ico: /favicon.svg
+footer:
+  copyright_since: 0
+  custom_text: null
+comment:
+  disqus:
+    shortname: ''

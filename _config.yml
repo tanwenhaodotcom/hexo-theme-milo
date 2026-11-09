@@ -1,0 +1,21 @@
+# Milo theme configuration
+uiux:
+  slogan: ''
+  primary_color: null
+  link_color: null
+  bg_color: null
+img:
+  avatar: ''
+head:
+  favicon:
+    ico: ''
+footer:
+  custom_text: null
+  copyright_since: 0
+search:
+  enable: true
+toc:
+  enable: true
+comment:
+  disqus:
+    shortname: ''

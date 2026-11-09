@@ -1,0 +1,29 @@
+{
+  "name": "hexo-theme-milo",
+  "version": "0.1.0",
+  "description": "A calm, responsive Hexo theme with native search and reading navigation",
+  "license": "MIT",
+  "keywords": [
+    "hexo",
+    "theme",
+    "milo"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "check": "node --check scripts/milo.js && node --check source/js/milo.js"
+  },
+  "files": [
+    "layout",
+    "scripts",
+    "source",
+    "languages",
+    "examples",
+    "_config.yml",
+    "_config.yml.example",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ]
+}
