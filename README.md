@@ -1,6 +1,6 @@
 # Milo
 
-当前版本：**0.2.0**（待发布）。
+当前版本：**0.3.0**（Pre-release）。
 
 An independent Hexo theme built with EJS, native CSS and JavaScript. No frontend framework or browser runtime dependencies; small utilities run at build time.
 
@@ -58,7 +58,7 @@ search.enable 关闭时隐藏搜索入口且不生成 search.json。comment.disq
 
 ## 开发
 
-layout/ 存放 EJS 模板；scripts/milo.js 注册字数 helper 和搜索生成器；source/css/milo.css 为独立样式；source/js/milo.js 为浏览器交互。没有构建步骤或主题专属 npm 依赖。
+layout/ 存放 EJS 模板；scripts/milo.js 注册字数 helper 和搜索生成器；source/css/milo.css 为独立样式；source/js/milo.js 为浏览器交互。没有前端编译步骤；主题构建期依赖见 package.json。
 
 项目仓库：https://github.com/tanwenhaodotcom/hexo-theme-milo
 
