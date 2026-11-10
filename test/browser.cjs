@@ -194,7 +194,7 @@ async function until(check,label){for(let i=0;i<100;i++){try{const value=await c
       const cases=await evaluate(`(async()=>{
         const main=document.querySelector('#main'),entry=main.querySelector('.entry').cloneNode(true);main.replaceChildren(entry);
         const copy=entry.querySelector('.entry-copy'),cover=entry.querySelector('.cover'),img=cover.querySelector('img');
-        const measure=()=>{const r=cover.getBoundingClientRect(),i=img.getBoundingClientRect(),c=copy.getBoundingClientRect(),e=entry.getBoundingClientRect(),style=getComputedStyle(cover),row=getComputedStyle(entry);return {width:r.width,height:r.height,imageHeight:i.height,top:r.top,imageTop:i.top,left:r.left,align:style.alignSelf,overflow:style.overflow,radii:[style.borderTopLeftRadius,style.borderTopRightRadius,style.borderBottomLeftRadius,style.borderBottomRightRadius],fit:getComputedStyle(img).objectFit,rowHeight:e.height,expectedHeight:Math.max(c.height,r.height)+parseFloat(row.paddingBottom)+parseFloat(row.borderBottomWidth),gap:row.gap,padding:row.paddingBottom,margin:row.marginBottom}};
+        const measure=()=>{const r=cover.getBoundingClientRect(),i=img.getBoundingClientRect(),c=copy.getBoundingClientRect(),e=entry.getBoundingClientRect(),style=getComputedStyle(cover),row=getComputedStyle(entry);return {width:r.width,height:r.height,imageHeight:i.height,top:r.top,imageTop:i.top,copyTop:c.top,copyHeight:c.height,left:r.left,align:style.alignSelf,overflow:style.overflow,radii:[style.borderTopLeftRadius,style.borderTopRightRadius,style.borderBottomLeftRadius,style.borderBottomRightRadius],fit:getComputedStyle(img).objectFit,rowHeight:e.height,expectedHeight:Math.max(c.height,r.height)+parseFloat(row.paddingBottom)+parseFloat(row.borderBottomWidth),gap:row.gap,padding:row.paddingBottom,margin:row.marginBottom}};
         const results=[];
         for(const fit of ['cover','contain'])for(const [w,h] of [[1200,400],[300,900],[600,600]]){
           cover.classList.toggle('cover-contain',fit==='contain');
@@ -210,9 +210,10 @@ async function until(check,label){for(let i=0;i<100;i++){try{const value=await c
       })()`);
       assert.ok(actual.length>0);assert.equal(cases.viewport,width);assert.ok(cases.overflow<=width);assert.equal(cases.noCover.count,0);assert.equal(cases.noCover.overflow,true);
       for(const {fit,variants} of cases.results){const first=variants[0];for(const item of variants){
-        assert.equal(item.align,'flex-start');assert.equal(item.fit,fit);assert.equal(item.overflow,'hidden');assert.ok(item.radii.every(r=>parseFloat(r)>0));
+        assert.equal(item.align,width>800?'center':'flex-start');assert.equal(item.fit,fit);assert.equal(item.overflow,'hidden');assert.ok(item.radii.every(r=>parseFloat(r)>0));
         assert.ok(Math.abs(item.height-item.imageHeight)<1);assert.ok(Math.abs(item.top-item.imageTop)<1);assert.ok(Math.abs(item.width/item.height-5/3)<0.02);
-        for(const key of ['width','height','top','left','gap','padding','margin'])assert.equal(item[key],first[key],key+' varies with copy length');
+        assert.ok(Math.abs(item.top-(item.copyTop+(width>800?(item.copyHeight-item.height)/2:0)))<1,'Cover vertical alignment');
+        for(const key of ['width','height','left','gap','padding','margin'])assert.equal(item[key],first[key],key+' varies with copy length');
         assert.ok(Math.abs(item.rowHeight-item.expectedHeight)<1,'Row should size naturally');
       }}
     }

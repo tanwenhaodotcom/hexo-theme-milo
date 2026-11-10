@@ -35,3 +35,6 @@
 .cover-contain img{object-fit:contain}
 .cover-contain img,.prose img.milo-screenshot{outline:1px solid var(--line);outline-offset:-1px;border-radius:12px}
 .prose img.milo-screenshot{box-shadow:0 2px 8px #0000000a}
+
+/* Center desktop covers; keep mobile thumbnails beside the title. */
+@media(min-width:801px){.cover{align-self:center}}
