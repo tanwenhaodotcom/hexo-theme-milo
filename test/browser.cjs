@@ -187,6 +187,13 @@ async function until(check,label){for(let i=0;i<100;i++){try{const value=await c
       }
       assert.deepEqual(errors,[]);return;
     }
+    async function checkHomeHeading(page){
+      const heading=await evaluate(`(()=>{const h=document.querySelector('#main>h1'),style=getComputedStyle(h),entry=document.querySelector('.entry'),before=entry.getBoundingClientRect().top;h.remove();const after=entry.getBoundingClientRect().top;document.querySelector('#main').prepend(h);return {count:document.querySelectorAll('h1').length,text:h.textContent,hidden:h.hidden||h.getAttribute('aria-hidden')==='true',display:style.display,visibility:style.visibility,position:style.position,width:style.width,height:style.height,clip:style.clipPath,shift:after-before,title:document.querySelector('.brand').textContent.trim()}})()`);
+      assert.equal(heading.count,1);assert.equal(heading.text,heading.title+' · 文章列表'+(page>1?' · 第 '+page+' 页':''));
+      assert.equal(heading.hidden,false);assert.notEqual(heading.display,'none');assert.equal(heading.visibility,'visible');assert.equal(heading.position,'absolute');assert.equal(heading.width,'1px');assert.equal(heading.height,'1px');assert.notEqual(heading.clip,'none');assert.equal(heading.shift,0);
+      const tree=await send('Accessibility.getFullAXTree');
+      assert.ok(tree.nodes.some(n=>!n.ignored && n.role?.value==='heading' && n.name?.value===heading.text && n.properties?.some(p=>p.name==='level' && p.value.value===1)),'Accessible level-one heading');
+    }
     // Set MILO_ENTITY_FIXTURE_DIR for npm test and this command to reuse real Hexo output.
     async function checkSummaryEntities(){
       if(!process.env.MILO_ENTITY_FIXTURE_DIR)return;
@@ -236,7 +243,7 @@ async function until(check,label){for(let i=0;i<100;i++){try{const value=await c
     for(const width of [1280,390,360,320]){
       await send('Emulation.setDeviceMetricsOverride',{width,height:844,deviceScaleFactor:1,mobile:width<600});
       await navigate('');
-      const home=await evaluate(`(()=>{const nav=document.querySelector('.topbar').getBoundingClientRect(),heading=document.querySelector('.page-heading').getBoundingClientRect(),entries=[...document.querySelectorAll('.entry')];return {y:scrollY,width:innerWidth,clientWidth:document.documentElement.clientWidth,headingTop:heading.top,navBottom:nav.bottom,count:entries.length,rows:entries.map(e=>{const r=e.getBoundingClientRect(),copy=e.querySelector('.entry-copy');return {top:r.top,bottom:r.bottom,width:copy.clientWidth,scroll:copy.scrollWidth}})}})()`);
+      const home=await evaluate(`(()=>{const nav=document.querySelector('.topbar').getBoundingClientRect(),heading=document.querySelector('.entry').getBoundingClientRect(),entries=[...document.querySelectorAll('.entry')];return {y:scrollY,width:innerWidth,clientWidth:document.documentElement.clientWidth,headingTop:heading.top,navBottom:nav.bottom,count:entries.length,rows:entries.map(e=>{const r=e.getBoundingClientRect(),copy=e.querySelector('.entry-copy');return {top:r.top,bottom:r.bottom,width:copy.clientWidth,scroll:copy.scrollWidth}})}})()`);
       // innerWidth itself can expand with mobile overflow: compare to device width.
       assert.equal(home.width,width,'Expanded layout viewport');
       assert.ok(home.clientWidth<=width);assert.equal(home.y,0);assert.equal(home.count,6);
@@ -261,7 +268,16 @@ async function until(check,label){for(let i=0;i<100;i++){try{const value=await c
       assert.equal(await evaluate('document.querySelector(".pager").getBoundingClientRect().bottom<=document.querySelector(".footer").getBoundingClientRect().top'),true);
       for(const mode of ['light','dark']){
         await evaluate('localStorage.setItem("milo-appearance",'+JSON.stringify(mode)+')');
+        await navigate('');
+        const layout=await evaluate(`(()=>{const entry=document.querySelector('.entry'),r=entry.getBoundingClientRect(),profile=document.querySelector('.profile'),nav=document.querySelector('.topbar').getBoundingClientRect();return {heading:!!document.querySelector('#main .page-heading'),first:document.querySelector('#main>h1').nextElementSibling===entry,gap:r.top-nav.bottom,aligned:Math.abs(r.top-profile.getBoundingClientRect().top),width:innerWidth,overflow:document.documentElement.scrollWidth}})()`);
+        assert.equal(layout.heading,false);assert.equal(layout.first,true);assert.ok(Math.abs(layout.gap-(width<=800?34:56))<1);
+        if(width>800)assert.ok(layout.aligned<1,'First article and author card align');
+        assert.equal(layout.width,width);assert.ok(layout.overflow<=width);
+        await checkHomeHeading(1);
+        await screenshot('milo-home-no-heading-'+width+'-'+mode);
         await navigate('page/2/');assert.equal(await evaluate('document.querySelectorAll(".entry").length'),1);
+        assert.equal(await evaluate('!!document.querySelector("#main .page-heading")'),false);
+        await checkHomeHeading(2);
         await navigate('missing-round6/');
         const missing=await evaluate(`(()=>{const main=document.querySelector('.not-found'),rect=main.getBoundingClientRect(),buttons=[...main.querySelectorAll('a')].map(a=>a.getBoundingClientRect());return {title:main.querySelector('h1').textContent,align:getComputedStyle(main).textAlign,label:Number.parseFloat(getComputedStyle(main.querySelector('.not-found-code')).fontSize),left:rect.left+Number.parseFloat(getComputedStyle(main).paddingLeft),brand:document.querySelector('.brand').getBoundingClientRect().left,buttons:buttons.length,sameRow:Math.abs(buttons[0].top-buttons[1].top)<1,footer:Math.round(document.querySelector('.footer').getBoundingClientRect().bottom),width:innerWidth}})()`);
         assert.equal(missing.title,'你在寻找什么？');assert.equal(missing.align,'left');assert.ok(missing.label<=14);assert.ok(Math.abs(missing.left-missing.brand)<1);assert.equal(missing.buttons,2);assert.equal(missing.sameRow,true);assert.equal(missing.footer,844);assert.equal(missing.width,width);

@@ -123,6 +123,14 @@ test('Hexo builds: canonical, Disqus, pagination totals and navigation',async()=
         assert.equal((readingHTML('<img src="x" loading="eager">').match(/loading=/g)||[]).length,1);
         for(const route of ['tags','about'])assert.ok(doc.querySelector(`.navlinks a[href="${root}${route}/"]`));
         const home=new JSDOM(await html('index.html')).window.document;
+        assert.equal(home.querySelector('.page-heading'),null);
+        assert.equal(home.querySelectorAll('h1').length,1);
+        assert.equal(home.querySelector('#main>h1.sr').textContent,'Test · 文章列表');
+        assert.equal(home.querySelector('#main>h1').nextElementSibling.className,'entry');
+        for(const route of ['categories/index.html','tags/index.html','search/index.html']){
+          const other=new JSDOM(await html(route)).window.document;
+          assert.ok(other.querySelector('.page-heading h1'),route+' keeps its heading');
+        }
         const sticky=home.querySelector('.sidebar>.sidebar-sticky.is-sticky');
         assert.ok(sticky);
         assert.equal(sticky.querySelector('.profile'),null);
@@ -138,6 +146,10 @@ test('Hexo builds: canonical, Disqus, pagination totals and navigation',async()=
           assert.equal(d.querySelector('script[src$="/js/reading.js"]'),null,route);
         }
         const secondHome=new JSDOM(await html('page/2/index.html')).window.document;
+        assert.equal(secondHome.querySelector('.page-heading'),null);
+        assert.equal(secondHome.querySelectorAll('h1').length,1);
+        assert.equal(secondHome.querySelector('#main>h1.sr').textContent,'Test · 文章列表 · 第 2 页');
+        assert.equal(secondHome.querySelector('#main>h1').nextElementSibling.className,'entry');
         assert.equal(secondHome.querySelector('.cover img').getAttribute('loading'),'eager');
         assert.equal(secondHome.querySelectorAll('.cover img')[1].getAttribute('loading'),'lazy');
         const covers=[...home.querySelectorAll('.cover')];
