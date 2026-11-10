@@ -1,5 +1,15 @@
 'use strict';
 const {stripHTML,unescapeHTML,escapeHTML}=require('hexo-util');
+// 构建期保护短中文词，保留原始文本、标点和普通换行作为降级。
+const titleSegmenter=typeof Intl.Segmenter==='function'?new Intl.Segmenter('zh',{granularity:'word'}):null;
+hexo.extend.helper.register('milo_title',value=>{
+  const title=String(value ?? '');
+  if(!titleSegmenter)return escapeHTML(title);
+  return Array.from(titleSegmenter.segment(title),({segment,isWordLike})=>{
+    const text=escapeHTML(segment);
+    return isWordLike && /^\p{Script=Han}{2,6}$/u.test(segment)?'<span class="title-word">'+text+'</span>':text;
+  }).join('');
+});
 hexo.extend.helper.register('milo_text',value=>unescapeHTML(stripHTML(String(value||''))).replace(/\s+/g,' ').trim());
 hexo.extend.helper.register('milo_words',value=>(stripHTML(String(value||'')).match(/[\u3400-\u9fff]|[A-Za-z0-9]+(?:['’-][A-Za-z0-9]+)*/g)||[]).length);
 hexo.extend.generator.register('milo-search',function(locals){if(hexo.theme.config.search?.enable===false)return [];return {path:'search.json',data:JSON.stringify(locals.posts.sort('date',-1).map(p=>({title:p.title,url:hexo.extend.helper.get('url_for').call(hexo,p.path),content:stripHTML(p.content||''),tags:p.tags.map(t=>t.name)})))};});

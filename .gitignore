@@ -16,3 +16,6 @@ Thumbs.db
 *.tgz
 /coverage/
 /screenshots/
+
+# 隔离的本地预览（含只读源文件的测试副本，禁止发布）
+/.preview/

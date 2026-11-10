@@ -34,6 +34,16 @@ test('Hexo builds: canonical, Disqus, pagination totals and navigation',async()=
       const hexo=new Hexo(base,{silent:true});
       try{
         await hexo.init();
+        const renderTitle=hexo.extend.helper.get('milo_title');
+        for(const title of ['和伙伴一起阅读，慢慢完善自己的主题','纯英文 English title & <script>alert("x")</script>','超长没有空格的中文标题'.repeat(8),'Emoji 👩‍💻 与中文标题','']){
+          const titleDOM=new JSDOM('<h2>'+renderTitle(title)+'</h2>');
+          assert.equal(titleDOM.window.document.querySelector('h2').textContent,title,'Title text stays exact');
+          assert.equal(titleDOM.window.document.querySelector('script'),null,'Title markup stays escaped');
+          for(const word of titleDOM.window.document.querySelectorAll('.title-word'))assert.match(word.textContent,/^\p{Script=Han}{2,6}$/u,'Only short Chinese words are kept together');
+          titleDOM.window.close();
+        }
+        assert.ok(renderTitle('和伙伴一起阅读').includes('class="title-word">一起</span>'));
+        assert.equal(renderTitle(null),'');
         await hexo.call('generate');
         const html=route=>fs.readFile(path.join(base,'public',route),'utf8');
         const notFound=new JSDOM(await html('404.html')).window.document;
@@ -47,9 +57,9 @@ test('Hexo builds: canonical, Disqus, pagination totals and navigation',async()=
         const keyword='中文 & CSS';
         const searchDOM=new JSDOM(await html('search/index.html'),{url:'https://example.com'+root+'search/?q='+encodeURIComponent(keyword),runScripts:'outside-only'});
         const sw=searchDOM.window;
-        assert.equal(sw.document.querySelectorAll('input[type=search]').length,1);
-        assert.equal(sw.document.querySelector('.mobile-search'),null);
-        assert.equal(sw.document.querySelector('.nav-search'),null);
+        assert.equal(sw.document.querySelectorAll('input[type=search]').length,2);
+        assert.ok(sw.document.querySelector('.search-toggle'));
+        assert.ok(sw.document.querySelector('.nav-search input').disabled);
         sw.matchMedia=()=>({matches:false,addEventListener(){}});
         sw.fetch=async url=>{assert.equal(url,root+'search.json');return {ok:true,json:async()=>[{title:keyword,url:root+'test-post/',content:'Summary',tags:[]}]}};
         sw.eval(await fs.readFile(path.join(theme,'source/js/milo.js'),'utf8'));
@@ -139,7 +149,7 @@ test('Hexo builds: canonical, Disqus, pagination totals and navigation',async()=
         assert.deepEqual([...sticky.querySelectorAll(':scope>.side-section>h2')].map(h=>h.textContent),['最近文章','分类']);
         assert.ok(home.querySelector('.sidebar>.profile'));
         assert.ok(home.querySelector('.nav-search input[name=q]'));
-        assert.ok(home.querySelector('.mobile-search'));
+        assert.ok(home.querySelector('.search-toggle'));
         assert.equal(home.querySelector('[rel=canonical]').href,`https://example.com${root}`);
         assert.equal(home.querySelector('.cover img').getAttribute('loading'),'eager');
         assert.equal(home.querySelector('.cover img').getAttribute('fetchpriority'),'high');
@@ -256,14 +266,56 @@ test('Hexo builds: canonical, Disqus, pagination totals and navigation',async()=
   }finally{await fs.rm(base,{recursive:true,force:true});}
 });
 
+test('compact author identity uses existing configuration and escapes text',async()=>{
+  const template=await fs.readFile(path.join(theme,'layout/_parts/identity.ejs'),'utf8'),ejs=require('ejs');
+  for(const [author,avatar,slogan] of [['示例作者','/avatar.svg','记录阅读与技术。'],['较长的示例作者名称','',[]],['','',['阅读','<b>日常</b>']],['<script>alert(1)</script>','',null]]){
+    const markup=ejs.render(template,{config:{author,title:'示例站点'},theme:{img:{avatar},uiux:{slogan}},url_for:p=>p});
+    const dom=new JSDOM(markup),d=dom.window.document;
+    assert.equal(d.querySelector('.identity-name').textContent,author || '示例站点');
+    assert.equal(d.querySelectorAll('img').length,avatar?1:0);
+    assert.equal(d.querySelectorAll('script,b').length,0);
+    assert.equal(d.querySelector('a').getAttribute('href'),'/about/');
+    if(avatar)assert.equal(d.querySelector('img').alt,'');
+    if(Array.isArray(slogan) && slogan.length)assert.equal(d.querySelector('.identity-intro').textContent,slogan.join(' '));
+    dom.window.close();
+  }
+  const index=await fs.readFile(path.join(theme,'layout/index.ejs'),'utf8');
+  for(const [current,author,avatar,slogan,visible] of [[1,'作者','','',true],[2,'作者','','',false],[1,'','','',false],[1,'','/avatar.svg','',true],[1,'','',[],false]]){
+    const data={config:{author,title:'示例站点'},theme:{img:{avatar},uiux:{slogan}},page:{current,posts:{each(){}}}};
+    const markup=ejs.render(index,{...data,partial:name=>name==='_parts/identity'?ejs.render(template,{...data,url_for:p=>p}):''});
+    const dom=new JSDOM(markup);assert.equal(!!dom.window.document.querySelector('.mobile-identity'),visible);dom.window.close();
+  }
+});
+
+test('search disclosure preserves drafts, focus and existing GET search',async()=>{
+  const header=await fs.readFile(path.join(theme,'layout/_parts/header.ejs'),'utf8'),ejs=require('ejs');
+  const markup=ejs.render(header,{config:{title:'Test'},theme:{search:{enable:true}},page:{path:''},url_for:p=>p,partial:()=>'<svg aria-hidden="true"></svg>'});
+  const dom=new JSDOM(markup+'<button id="outside">Outside</button>',{url:'https://example.com',runScripts:'outside-only'});
+  const {window:w}=dom;w.matchMedia=()=>({matches:false,addEventListener(){}});w.eval(await fs.readFile(path.join(theme,'source/js/milo.js'),'utf8'));
+  const d=w.document,button=d.querySelector('.search-toggle'),form=d.querySelector('.nav-search'),input=form.querySelector('input'),outside=d.querySelector('#outside');
+  assert.equal(input.disabled,true);assert.equal(form.getAttribute('aria-hidden'),'true');assert.ok(form.hasAttribute('inert'));
+  button.click();assert.equal(d.activeElement,input);assert.equal(input.disabled,false);assert.equal(button.getAttribute('aria-expanded'),'true');
+  input.value='中文草稿 & UI';
+  input.dispatchEvent(new w.KeyboardEvent('keydown',{key:'Escape',isComposing:true,bubbles:true,cancelable:true}));assert.ok(form.classList.contains('open'));
+  const escape=new w.KeyboardEvent('keydown',{key:'Escape',bubbles:true,cancelable:true});input.dispatchEvent(escape);
+  assert.equal(escape.defaultPrevented,true);assert.equal(d.activeElement,button);assert.equal(input.value,'中文草稿 & UI');assert.equal(input.disabled,true);
+  button.click();button.click();assert.equal(input.value,'中文草稿 & UI');assert.equal(button.getAttribute('aria-expanded'),'false');
+  button.click();outside.focus();outside.click();assert.equal(d.activeElement,outside);assert.equal(button.getAttribute('aria-expanded'),'false');
+  button.click();d.querySelector('.appearance-button').click();assert.equal(button.getAttribute('aria-expanded'),'false');assert.equal(d.querySelector('.appearance-menu').hidden,false);
+  button.click();assert.equal(d.querySelector('.appearance-menu').hidden,true);assert.equal(form.method,'get');assert.equal(new URL(form.action).pathname,'/search/');assert.equal(input.name,'q');assert.equal(input.value,'中文草稿 & UI');
+  dom.window.close();
+});
+
 test('appearance keyboard navigation and focus lifecycle',async()=>{
   const header=await fs.readFile(path.join(theme,'layout/_parts/header.ejs'),'utf8');
   const ejs=require('ejs');
   const markup=ejs.render(header,{config:{title:'Test'},theme:{search:{enable:false}},page:{path:''},url_for:p=>p});
   const dom=new JSDOM(markup+'<button id="outside">Outside</button>',{url:'https://example.com',runScripts:'outside-only'});
-  const {window:w}=dom;w.matchMedia=()=>({matches:false,addEventListener(){}});
+  const {window:w}=dom;let systemChange;const system={matches:false,addEventListener(type,listener){systemChange=listener}};w.matchMedia=()=>system;
   w.eval(await fs.readFile(path.join(theme,'source/js/milo.js'),'utf8'));
   const d=w.document,toggle=d.querySelector('.appearance-button'),menu=d.querySelector('.appearance-menu'),choices=[...menu.querySelectorAll('button')];
+  assert.match(toggle.getAttribute('aria-label'),/当前浅色（跟随系统）/);
+  assert.equal(d.querySelector('.tools').classList.contains('tools--compact'),true,'Search-disabled tools remain compact');
   const key=k=>d.activeElement.dispatchEvent(new w.KeyboardEvent('keydown',{key:k,bubbles:true,cancelable:true}));
   toggle.focus();key('ArrowUp');assert.equal(d.activeElement,choices[2]);
   key('ArrowDown');assert.equal(d.activeElement,choices[0]);
@@ -272,6 +324,10 @@ test('appearance keyboard navigation and focus lifecycle',async()=>{
   key('ArrowDown');assert.equal(d.activeElement,choices[0]);
   d.querySelector('#outside').focus();assert.equal(menu.hidden,true);
   toggle.click();choices[1].click();assert.equal(d.documentElement.dataset.mode,'dark');assert.equal(d.activeElement,toggle);assert.equal(menu.hidden,true);
+  assert.equal(w.localStorage.getItem('milo-appearance'),'dark');assert.match(toggle.getAttribute('aria-label'),/当前深色，/);
+  systemChange();assert.equal(d.documentElement.dataset.mode,'dark','Explicit preference ignores system');
+  toggle.click();choices[0].click();system.matches=true;systemChange();assert.equal(d.documentElement.dataset.mode,'dark');assert.match(toggle.getAttribute('aria-label'),/当前深色（跟随系统）/);
+  system.matches=false;systemChange();assert.equal(d.documentElement.dataset.mode,'light');assert.match(toggle.getAttribute('aria-label'),/当前浅色（跟随系统）/);
   toggle.click();d.querySelector('#outside').click();assert.equal(menu.hidden,true);
   dom.window.close();
 });

@@ -1,190 +1,398 @@
 # Milo
 
-当前版本：**0.3.1**（Pre-release）。
+**一款简洁、轻量、注重阅读体验的 Hexo 博客主题。**
 
-Milo 是使用 EJS、原生 CSS 和 JavaScript 构建的独立 Hexo 博客主题。没有前端框架和浏览器运行时依赖，文本和图片工具仅在构建期运行。
+[![版本](https://img.shields.io/badge/版本-v0.4.0--pre--release-informational)](https://github.com/tanwenhaodotcom/hexo-theme-milo/releases/tag/v0.4.0) · [下载与版本记录](https://github.com/tanwenhaodotcom/hexo-theme-milo/releases) · [反馈问题](https://github.com/tanwenhaodotcom/hexo-theme-milo/issues)
 
-## 功能
+![Milo 主题首页预览，浅色模式](docs/images/milo-preview-light.png)
 
-- 简洁双栏布局、手机适配、浅色/深色/跟随系统
-- 右上角搜索入口，本地全文索引仅搜索时加载
-- 文章目录吸顶、平滑跳转和当前章节跟踪
-- 年度归档、分类与标签、独立关于页
-- 作者资料和字数统计，Disqus 按需加载
-- 原生系统字体、内联 SVG 图标，无外部字体或前端框架
+> 预览图来自 Milo 本地测试站点的实际 HTML 页面及配套资源，展示的是开发中的界面。预发布版本的外观或细节可能有所不同；图片中的文章、头像均为示例内容。
 
-## 环境与安装
+Milo 使用 **EJS、原生 CSS 与 JavaScript**，无前端框架。提供响应式双栏首页、浅色／深色模式、站内搜索、文章目录、阅读进度、归档、分类、标签，以及可选评论和图片灯箱。
 
-已验证 Node.js 26.13.0 / Hexo 8.1.2。主题声明 Node.js >=18，但 Hexo 8.1.2 要求 Node.js >=20.19；须同时满足所用 Hexo 和插件的要求。Hexo 7、Node.js 18 未验证。需先安装 Node.js、npm 和 Git。
+**本文是 Milo 的使用说明，不是 Hexo 入门教程。** 只需已有一个可以正常生成的 Hexo 博客，就能按照以下步骤启用 Milo。还没安装 Hexo？请先参考 [Hexo 官方文档](https://hexo.io/zh-cn/docs/)。
 
-新建站点时，在准备存放博客的父目录执行；已有 Hexo 站点可跳过：
+**兼容性：** 已在 Node.js 26.13.0、Hexo 8.1.2 下验证。Milo 自身声明 Node.js ≥ 18，但 Hexo 8.1.2 要求 Node.js ≥ 20.19；应同时满足实际 Hexo 版本及插件的环境要求。其他版本尚未完整验证。
 
-```sh
-npx --package hexo-cli hexo init milo-site
-cd milo-site
-npm install
-```
+## 目录
 
-在博客根目录安装主题及站点必需渲染器、生成器：
+- [安装与启用](#安装与启用)
+- [配置文件放在哪里](#配置文件放在哪里)
+- [功能开关速查](#功能开关速查)
+- [设置头像、简介与网站图标](#设置头像简介与网站图标)
+- [启用搜索、归档、分类、标签和关于页](#启用搜索归档分类标签和关于页)
+- [文章封面与专属参数](#文章封面与专属参数)
+- [阅读、评论、订阅与 SEO](#阅读评论订阅与-seo)
+- [常用命令](#常用命令)
+- [更新与卸载](#更新与卸载)
+- [常见问题](#常见问题)
 
-```sh
+## 安装与启用
+
+### 1. 把 Milo 安装到已有博客
+
+打开终端，先进入 **Hexo 博客根目录**（即包含站点 `_config.yml`、`source/`、`themes/` 的文件夹），然后执行：
+
+```bash
 git clone https://github.com/tanwenhaodotcom/hexo-theme-milo.git themes/milo
 npm install --prefix themes/milo --omit=dev
 npm install hexo-renderer-ejs hexo-renderer-marked hexo-generator-index hexo-generator-archive hexo-generator-category hexo-generator-tag
 ```
 
-将博客根目录 _config.yml 的 theme 改为 milo，按实际情况设置 title、author、url、root 和 language: zh-CN。主题界面主要为中文，尚未提供完整多语言翻译。
+第一行下载主题到 `themes/milo`；第二行安装 Milo 构建期所需依赖；第三行确保站点安装了 Milo 使用的渲染器及页面生成器。**这些命令均在博客根目录执行。**
 
-复制 themes/milo/_config.yml.example 为博客根目录 _config.milo.yml，不要覆盖博客的 _config.yml。主题的 hexo-util、image-size 仅用于构建；Disqus 是可选服务，Atom 不需另装插件。本主题不包含部署工具。
+如果不使用 Git，也可到 [Releases](https://github.com/tanwenhaodotcom/hexo-theme-milo/releases) 下载主题压缩包，解压后将主题文件放进 `themes/milo/`，再执行上面的两条 `npm install` 命令。确保 `_config.yml`、`layout/`、`scripts/` 等文件就在 `themes/milo/` 下，而不是多嵌套了一层文件夹。
 
-### 本地预览
+> **版本提示：** `git clone` 默认取得仓库当前分支内容，可能包含尚未正式发布的改动。希望使用指定版本，可参照 [v0.4.0 预发布说明](https://github.com/tanwenhaodotcom/hexo-theme-milo/releases/tag/v0.4.0) 下载对应源代码。当前项目仍为 Pre-release。
 
-在博客根目录执行，hexo-server 为本地预览所需插件（新建站点通常已有）：
+### 2. 在 Hexo 中选择 Milo
 
-```sh
-npm install hexo-server
+打开 **博客根目录**的 `_config.yml`（不是 `themes/milo/_config.yml`），将 `theme` 设置为：
+
+```yaml
+theme: milo
+```
+
+博客名称和作者信息仍属于 Hexo 站点配置，例如：
+
+```yaml
+title: 我的博客
+author: 博客作者
+language: zh-CN
+```
+
+已有的 `url`、`root` 应与你真实的部署地址一致；使用子目录部署时尤其要检查 `root`。不要为了启用主题而覆盖整份站点配置。
+
+### 3. 添加 Milo 的独立配置文件
+
+将 `themes/milo/_config.yml.example` **复制到博客根目录**，重命名为：
+
+```text
+_config.milo.yml
+```
+
+这是你日常修改 Milo 的主要地方。**不要将它复制成 `_config.yml`，也不要覆盖博客原有的 `_config.yml`。**
+
+> `themes/milo/_config.yml` 是主题默认值；博客根目录 `_config.milo.yml` 用于覆盖你自己的设置。建议优先修改后者，方便以后更新主题。
+
+### 4. 预览效果
+
+在博客根目录执行：
+
+```bash
 npx hexo clean
 npx hexo generate
 npx hexo server
 ```
 
-访问终端显示的本地地址。子路径部署须正确设置 url/root；修改主题配置后重启服务。
+打开终端提示的地址，通常是 **http://localhost:4000/**。如果提示找不到 `hexo server`，可先在博客根目录执行 `npm install hexo-server`。
 
-## 配置与内容
+成功后，首页就会使用 Milo 的布局。文章仍是你原有的 Hexo 文章，不会因为更换主题而被删除。
 
-主题默认配置见 _config.yml。博客标题、作者、网址、语言、分页仍使用 Hexo 原生站点配置。主题没有打包个人文章、头像、域名、后台或部署凭据。
+## 配置文件放在哪里
 
-将 themes/milo/examples/pages/ 中的四个页面示例分别复制到 source/search/index.md、source/tags/index.md、source/categories/index.md 和 source/about/index.md（先创建目录）。保留对应 layout，关于页正文自行填写；about/index.html 也会识别为关于页。
+| 位置 | 作用 | 应该如何修改 |
+| --- | --- | --- |
+| 博客根目录 `_config.yml` | 网站标题、作者、网址、语言、主题名称、分页 | 修改已有的站点配置 |
+| 博客根目录 `_config.milo.yml` | Milo 的外观及功能开关 | **优先修改这里** |
+| `themes/milo/_config.yml` | Milo 默认配置 | 通常无需修改 |
+| `source/` | 博客文章、页面及个人图片资源 | 放置你自己的内容 |
 
-文章可使用 cover 或 thumbnail、toc: false、comments: false。目录由 Markdown 标题自动生成。总字数按中文字符和英文单词计算，不含 HTML 标记与标点。
+例如，博客中可能有这样的结构：
 
-### 首页封面与正文截图
-
-首页仅使用文章 Front Matter 的 `cover`，未设置时使用 `thumbnail`；不会自动提取正文首图。正文 Markdown/HTML 图片只显示在正文中，设置封面也不会自动插入正文。
-
-`cover_fit` 仅接受 `cover`（默认，摄影图片填满封面区域，可能裁剪）和 `contain`（截图完整等比显示，允许留白）。缺省或其他值均回退 `cover`。首页封面在所有屏幕宽度统一使用 16:10 区域；800px 及以下仍按元信息、全宽标题、封面、摘要单栏排列，不再限制封面最大高度。两种模式使用相同占位尺寸；contain 自动添加克制的边界、圆角和轻微阴影，适配深浅色。
-
-```yaml
----
-title: 界面截图
-cover: /images/screenshot.png # 或 thumbnail，二者同时设置时 cover 优先
-cover_fit: contain
----
+```text
+我的-Hexo-博客/
+├── _config.yml              # Hexo 站点配置；theme: milo
+├── _config.milo.yml         # Milo 个人设置
+├── source/
+│   ├── _posts/
+│   ├── images/
+│   ├── about/
+│   ├── search/
+│   ├── tags/
+│   └── categories/
+└── themes/
+    └── milo/
+        ├── _config.yml
+        ├── _config.yml.example
+        ├── layout/
+        ├── scripts/
+        └── source/
 ```
 
-正文截图按需使用 HTML，尺寸填写图片真实像素值；普通摄影图片无需添加 class。图片内容不会被主题修改。
+## 功能开关速查
 
-```html
-<img src="/images/screenshot.png" class="milo-screenshot" width="1200" height="800" alt="界面说明">
-```
+以下设置写在**博客根目录的 `_config.milo.yml`**。如果文件里还没有对应字段，可以按 YAML 缩进自行添加。
 
-站点本地图片路径可由主题在构建时适配 /demo/；部署时仍需正确配置站点 url/root。加载失败时封面保留原有占位，不会自动换图。
+| 配置项 | 默认值 | 作用 |
+| --- | --- | --- |
+| `search.enable` | `true` | 开启／关闭站内搜索；关闭时不生成 `search.json` |
+| `toc.enable` | `true` | 开启／关闭文章目录 |
+| `reading.lightbox` | `false` | 是否开启正文图片灯箱 |
+| `sidebar.sticky` | `true` | 桌面端最近文章与分类区域是否吸附 |
+| `feed.enable` | `true` | 是否生成内置 Atom 订阅 |
+| `feed.limit` | `20` | Atom 中包含的最新文章数量 |
+| `comment.disqus.shortname` | 空 | 填写 Disqus shortname 以启用评论；留空关闭 |
+| `uiux.slogan` | 空 | 作者卡片与关于页的简介 |
+| `img.avatar` | 空 | 作者头像地址 |
+| `head.favicon.ico` | 空 | 网站图标地址 |
+| `seo.image` | 空 | 社交分享时优先使用的图片 |
+| `uiux.primary_color` | 默认主题色 | 主强调色，可填写 CSS 颜色 |
+| `uiux.link_color` | 默认主题色 | 链接颜色 |
+| `uiux.bg_color` | 默认背景色 | 页面背景颜色 |
+| `footer.custom_text` | 空 | 自定义页脚内容；仅填写自己信任的 HTML |
+| `footer.copyright_since` | `0` | 版权起始年份；`0` 表示当前年份 |
 
-search.enable 关闭时隐藏搜索入口且不生成 search.json。comment.disqus.shortname 留空关闭评论；启用后需要读者主动点击才连接 Disqus。footer.custom_text 允许受信任的 HTML，不用于不可信访客输入。
-
-支持部署到 GitHub Pages 的子路径站点；站点 url 与 root 需按 Hexo 要求配置。此仓库只提供主题，hexo-admin 等后台属于博客自己的依赖。
-
-## 开发
-
-layout/ 存放 EJS 模板；scripts/milo.js 提供构建期 helper、SEO、搜索、Atom、图片尺寸和 404 处理；source/css/milo.css 为独立样式；source/js/milo.js 为浏览器交互。没有前端编译步骤；主题构建期依赖见 package.json。
-
-项目仓库：https://github.com/tanwenhaodotcom/hexo-theme-milo
-
-## 许可证
-
-采用 [MIT 许可证](LICENSE)，保留英文法律文本及版权声明。
-
-## SEO 与订阅
-
-自动生成页面标题、描述、Open Graph 和 Twitter Card；文章描述优先使用 Markdown 的 more 分隔符之前的摘要，其次为文章 description、正文。分享图片依次使用 cover、thumbnail、主题 seo.image、img.avatar 和内置默认 PNG。可在站点 _config.milo.yml 中设置 seo.image，支持站内路径或完整 HTTP(S) URL。图片应使用适合分享卡片的横向尺寸；配置头像时建议另外提供横向 seo.image。
-
-默认生成 atom.xml（最近 20 篇文章）并添加 Feed 自动发现。主题 feed.enable: false 可关闭；feed.limit 可设置正整数篇数。已有名为 feed 的生成器（例如站点安装 hexo-generator-feed）时，主题不再生成 Atom，自动发现使用站点 feed.path（字符串或数组，默认 atom.xml）。站点 feed: false 或 feed.enable: false 也会关闭主题订阅输出。
-
-## 阅读体验
-
-文章页提供桌面章节高亮、手机端原生折叠目录、正文阅读进度及代码复制。800px 及以下的阅读进度为紧贴吸顶导航下缘的 3px 细条，不显示百分比；位置复用导航实际尺寸测量，桌面进度组件保持不变。代码复制保留缩进与换行，不包含高亮行号；浏览器不允许复制时会提示手动选择。
-
-正文图片保留作者已有的加载方式和尺寸。主题通过构建期 image-size 读取站点 source、主题 source 或文章资源目录中的图片元数据，自动补齐缺失的 width/height；只读前 256 KiB 并缓存结果，不处理图片内容，也不抓取远程图片。缺失、损坏或无法识别的图片不阻断构建。未知尺寸图片仍按临时比例占位；远程图片、复杂响应式图片请显式填写真实宽高，以减少 CLS。
-
-靠前的正文首图及列表第一篇的封面优先加载，其余图片默认懒加载；显式 loading、fetchpriority、decoding 设置优先。reading.js 只在有目录、代码块或已启用灯箱图片的正文页加载。复制 API 被拒绝时会继续尝试传统复制，并恢复焦点和文本选区；两种方式均失败时提示手动选择。
-
-可在站点 _config.milo.yml 设置 reading.lightbox: true 启用原生灯箱（默认关闭）；文章 front matter 的 lightbox: false 或图片 data-no-lightbox 可单独禁用。已有图片链接保持原行为。支持键盘 Enter/空格打开、Tab/Shift+Tab 保持在弹窗内、Escape 或关闭按钮退出，并恢复图片焦点；不支持原生 dialog 的浏览器保留普通图片。
-
-## 分页与 404
-
-建议在博客根目录的 _config.yml 设置 per_page: 6，自定义时改为所需正整数。若配置了 index_generator.per_page，它会覆盖首页的全局设置；删除该覆盖项即可沿用 per_page，或同步设置为同一个值。归档、分类、标签可分别使用 archive_generator.per_page、category_generator.per_page、tag_generator.per_page；归档单页展示可设置 archive_generator.per_page: 0。主题不会截断文章列表或写死每页数量。修改站点配置后请重启 Hexo Server。
-
-主题自动生成 public/404.html，沿用站点导航、页脚及深浅色外观，无需手动创建 Markdown 页面。已有 source/404.html 或生成路径为 404.html 的站点页面优先保留。部署时由托管平台将未匹配 URL 交给 404.html 并返回 HTTP 404；子目录站点按平台规则配置到对应的 /demo/404.html。
-
-## 页面细节与浏览器回归
-
-首页摘要中的连续长词会自动换行，分页数量仍由 Hexo 配置决定。404 沿用站点容器宽度，采用左对齐的小标识、友好标题和首页/搜索按钮；关闭 search.enable 时不显示搜索按钮。
-
-搜索结果的标题和可见摘要会标记查询词，支持中文、英文、重复匹配及按空白分隔的多个高亮词。高亮只改变展示，不改变原有整串查询过滤、结果顺序或索引；正则特殊字符按字面处理，内容通过 DOM 文本节点和 mark 元素生成。
-
-开发依赖、回归命令和浏览器夹具要求见 [验证说明](VERIFICATION.md)。普通用户无需安装 jsdom 或运行主题测试。
-
-## 桌面粘性侧栏
-
-默认 sidebar.sticky: true。仅最近文章和分类组成的区域使用原生 CSS sticky；作者卡片自然滚出视野。双栏布局（宽度大于 800px）启用，当前导航高 65px，吸附区在其下方保留 24px；区域受父容器底部限制，内容超过可用视口高度时可在区内滚动。短页面没有足够滚动空间时，不会强行悬浮到 Footer。手机端保留现有布局，不启用粘性；文章目录不受影响。
-
-在站点 _config.milo.yml 中设置以下内容可关闭：
+例如，只想关闭目录和侧栏吸附、启用图片灯箱，可以写：
 
 ```yaml
+toc:
+  enable: false
+
 sidebar:
   sticky: false
+
+reading:
+  lightbox: true
 ```
 
-配置修改后重启 Hexo Server。侧栏宽度、作者卡片及模块间距保持不变，不使用 fixed、滚动监听或额外依赖。
+**注意：** YAML 中缩进使用空格，不要用 Tab。重复定义同一个顶层键（例如写两段 `reading:`）可能覆盖此前的设置，建议合并到同一段。
 
-可在保持预览运行时设置 MILO_TEST_SIDEBAR_ONLY=1，再执行 npm run test:browser 单独复验侧栏；完整浏览器测试也包含该回归。测试覆盖桌面、双栏平板、手机、深浅色、父容器边界和关闭开关。
+## 设置头像、简介与网站图标
 
-## 配置速查
+假设你将两张图片放在博客根目录下：
 
-在博客根目录 _config.milo.yml 覆盖所需值，完整默认值见 [_config.yml](_config.yml)。
+```text
+source/images/avatar.png
+source/images/favicon.ico
+```
 
-| 配置键 | 用途 |
+就可以在 `_config.milo.yml` 中写：
+
+```yaml
+uiux:
+  slogan: 记录生活与思考
+
+img:
+  avatar: /images/avatar.png
+
+head:
+  favicon:
+    ico: /images/favicon.ico
+```
+
+昵称默认读取 Hexo 站点 `_config.yml` 中的 `author`，不需要在 Milo 中额外设置。请使用自己的图片，主题不会附带个人头像或文章。
+
+## 启用搜索、归档、分类、标签和关于页
+
+Milo 已提供这些页面的布局；其中**搜索、标签、分类、关于页**建议按下面的文件路径建立页面，以显示对应内容。
+
+在 `themes/milo/examples/pages/` 中找到示例文件，将其复制到**博客根目录的 `source/`**：
+
+| 复制来源（主题目录内） | 复制目标（博客 `source/` 下） | 页面地址 |
+| --- | --- | --- |
+| `examples/pages/search.md` | `search/index.md` | `/search/` |
+| `examples/pages/tags.md` | `tags/index.md` | `/tags/` |
+| `examples/pages/categories.md` | `categories/index.md` | `/categories/` |
+| `examples/pages/about.md` | `about/index.md` | `/about/` |
+
+例如，复制搜索示例后的文件内容类似这样：
+
+```yaml
+---
+title: 搜索
+layout: search
+comments: false
+---
+```
+
+**请保留 `layout` 字段**，这是 Milo 识别页面类型的关键。关于页可在文件的第二个 `---` 下方直接用 Markdown 写个人介绍。归档页由已安装的 Hexo 归档生成器生成，通常不必手动创建。
+
+搜索使用本地静态索引，点击导航栏搜索图标后输入关键词并按 Enter；无需配置第三方搜索服务。关闭 `search.enable` 时，搜索入口和索引会一起关闭。
+
+## 文章封面与专属参数
+
+Milo 读取文章顶部的 **Front Matter**（两个 `---` 之间的 YAML）来控制封面、目录等行为。
+
+### 首页封面
+
+先将图片放到博客的 `source/images/`，例如 `source/images/cover.jpg`，然后在某篇文章中写：
+
+```yaml
+---
+title: 我的第一篇文章
+categories: 随笔
+tags:
+  - 记录
+cover: /images/cover.jpg
+cover_fit: cover
+---
+```
+
+| 参数 | 用法 |
 | --- | --- |
-| uiux.slogan | 作者卡片和关于页简介，可用字符串或数组 |
-| uiux.primary_color / link_color / bg_color | 按钮、链接和背景颜色 |
-| img.avatar / head.favicon.ico | 自备头像和图标路径，留空不显示 |
-| footer.custom_text / copyright_since | 受信任的页脚 HTML / 起始年份，0 使用当前年份 |
-| search.enable / toc.enable | 搜索 / 目录开关 |
-| comment.disqus.shortname | Disqus 站点标识，留空关闭 |
-| seo.image | 分享图片路径或 HTTP(S) URL |
-| feed.enable / limit | 内置 Atom 开关 / 正整数篇数 |
-| reading.lightbox | 图片灯箱，默认关闭 |
-| sidebar.sticky | 桌面侧栏吸附，默认开启 |
+| `cover` | 指定首页文章封面，优先级高于 `thumbnail` |
+| `thumbnail` | 未指定 `cover` 时使用的备用封面 |
+| `cover_fit: cover` | 默认值，填满 16:10 封面区域；照片可能被适度裁切 |
+| `cover_fit: contain` | 在 16:10 区域内完整显示图片，适合网页截图，可能留白 |
 
-标题、作者、域名使用 Hexo 站点配置；关于页正文可加入个人介绍和社交链接，主题没有专门的社交链接配置键。图片路径必须对应自行添加的资源，示例不附带头像或私人截图。
+**正文首图不会自动成为首页封面。** 设置了 `cover` 也不会自动在文章正文插入同一张图片；若正文也需要显示，请在 Markdown 中正常插入。
+
+### 单篇文章的可选设置
+
+```yaml
+---
+title: 一篇不显示目录的文章
+toc: false
+comments: false
+lightbox: false
+---
+```
+
+- `toc: false`：只关闭这篇文章的目录；全局开关为 `toc.enable`。
+- `comments: false`：只关闭这篇文章的评论。
+- `lightbox: false`：只关闭这篇文章的图片灯箱（全局开启灯箱时适用）。
+
+### 正文截图
+
+通常直接使用 Markdown 图片语法即可：
+
+```md
+![界面截图](/images/screenshot.png)
+```
+
+如果要让截图完整显示，并帮助浏览器提前预留图片空间，可以填写图片的真实宽高：
+
+```html
+<img src="/images/screenshot.png" class="milo-screenshot" width="1200" height="800" alt="界面截图">
+```
+
+`width` 与 `height` 应填写原图的真实像素尺寸。远程图片或无法自动识别尺寸的图片尤其建议手动填写，以减少页面加载时的布局跳动。
+
+## 阅读、评论、订阅与 SEO
+
+### 阅读体验
+
+Milo 包含桌面文章目录、手机折叠目录、阅读进度、代码复制和可选灯箱。目录会根据文章中的 Markdown 标题自动生成；无需手动维护目录清单。
+
+深浅色模式可在右上角切换，也支持跟随系统。关闭目录或启用灯箱，只需修改前述配置开关，不需要额外插件。
+
+### Disqus 评论（可选）
+
+在 `_config.milo.yml` 中填写你自己的 Disqus shortname：
+
+```yaml
+comment:
+  disqus:
+    shortname: your-shortname
+```
+
+留空即关闭。启用时，访客需要主动点击“加载评论”才会连接 Disqus。这里的 `your-shortname` 只是占位符，请替换成自己的站点标识。
+
+### Atom 订阅
+
+Milo 默认生成 `/atom.xml`，最多包含最近 20 篇文章：
+
+```yaml
+feed:
+  enable: true
+  limit: 20
+```
+
+如果你的博客已经安装其他 Feed 生成器，主题会优先保留站点现有方案，避免生成冲突。需要关闭 Milo 内置订阅时，设置 `feed.enable: false`。
+
+### SEO 与分享图片
+
+Milo 会生成常见的页面标题、描述、Canonical、Open Graph 和 Twitter Card 元信息。你可以配置分享图片：
+
+```yaml
+seo:
+  image: /images/share-cover.jpg
+```
+
+分享图建议使用适合社交卡片的横向图片。网站真实域名、子路径及部署配置仍在 Hexo 站点中维护。
+
+## 常用命令
+
+**Milo 本身不是单独运行的程序。** 日常预览、构建和部署依然使用 Hexo 命令；下面列的是使用 Milo 时最常用的操作。
+
+### 博客根目录执行
+
+| 命令 | 用途 |
+| --- | --- |
+| `npx hexo server` | 本地预览博客 |
+| `npx hexo generate` | 生成静态网站文件 |
+| `npx hexo clean` | 清理旧生成文件与缓存，排查配置不生效时使用 |
+| `npx hexo deploy` | 使用**博客自己已配置**的部署插件发布；Milo 不提供部署工具 |
+| `npm install --prefix themes/milo --omit=dev` | 安装或更新主题构建依赖 |
+
+修改 `_config.yml` 或 `_config.milo.yml` 后，一般需要**重启 Hexo Server**。普通文章和样式修改不必每次都执行 `clean`。
+
+### 主题维护者／开发者专用
+
+以下命令在 `themes/milo/` 内执行，普通使用者**不需要运行**：
+
+```bash
+npm install          # 安装开发依赖
+npm run check        # JavaScript 语法检查
+npm test             # 主题自动化测试
+npm run test:browser # 主题浏览器测试
+```
+
+主题开发者可参阅 [VERIFICATION.md](VERIFICATION.md) 和 [CONTRIBUTING.md](CONTRIBUTING.md)。这些命令是主题开发测试工具，不是 Hexo 站点的发布命令。
 
 ## 更新与卸载
 
-更新前备份配置及主题内自行修改的文件。在博客根目录执行：
+**更新前请备份**博客根目录的 `_config.milo.yml`，以及任何直接修改过的主题源文件。
 
-```sh
-git -C themes/milo pull --ff-only
-npm install --prefix themes/milo --omit=dev
-npx hexo clean
-npx hexo generate
-```
-
-此方式跟随默认分支，可能包含未发布修改；需要固定版本时先阅读对应 Release，再选择标签。直接修改主题的用户须先处理自己的改动，不要强制覆盖。
-
-卸载时先将站点 theme 改为已安装的其他主题，再删除 themes/milo，按需移除 _config.milo.yml，然后 clean 和 generate。文章与站点依赖独立保留。
+- **Git 安装、跟随默认分支：** 在博客根目录执行 `git -C themes/milo pull --ff-only`，然后执行 `npm install --prefix themes/milo --omit=dev`。如果主题处于标签（detached HEAD）或存在本地修改，请不要直接运行 `pull`。
+- **安装了指定 Release：** 到 [Releases](https://github.com/tanwenhaodotcom/hexo-theme-milo/releases) 获取希望升级到的版本，按版本说明更换主题文件，并重新安装主题依赖。不要将主分支自动更新误认为固定版本升级。
+- **卸载：** 先在博客站点 `_config.yml` 中切换到其他已安装主题，再删除 `themes/milo/`。`_config.milo.yml` 可自行保留或移除；博客文章不会因为卸载 Milo 而删除。
 
 ## 常见问题
 
-- 无样式或子路径链接错误：检查站点 url/root，清理旧生成文件后重建。
-- 搜索、分类、标签或关于页缺失：按上述路径复制示例并检查 layout；关闭搜索不生成索引。
-- 头像或封面缺失：添加实际图片并检查路径；正文首图不会自动成为封面。
-- 配置未生效：区分站点配置与主题覆盖配置，重启 Hexo Server；更换分页策略后 clean。
-- 线上未使用 404：由托管平台配置未知路径及 HTTP 404 状态。
+<details>
+<summary><strong>切换到 Milo 后没有样式，或者打开页面是 404？</strong></summary>
 
-## 开发方式与贡献说明
+检查 `theme: milo` 是否写在博客根目录的 `_config.yml`；确认实际目录为 `themes/milo/`；再运行 `npx hexo clean && npx hexo generate`，重启本地服务。部署到子路径时，核对站点的 `url` 和 `root`。
+</details>
 
-Milo 是一个由项目维护者主导设计与需求，主要使用 OpenAI Codex 完成代码编写、调试、测试和构建的 Hexo 主题。项目维护者负责功能规划、设计决策、验收与版本发布，并承担项目维护责任。
+<details>
+<summary><strong>搜索、分类、标签或关于页打不开？</strong></summary>
 
-本项目不是 OpenAI 官方开发、认证或担保的产品，Codex 不独立运营或维护本项目。
+先检查是否按照[页面创建表](#启用搜索归档分类标签和关于页)复制示例文件，并保留正确的 `layout`。搜索还需 `search.enable: true`，且有可供搜索的文章。
+</details>
 
-欢迎通过仓库 Issues 或 Pull Request 参与，详见 [贡献指南](CONTRIBUTING.md)。请勿在公开反馈中上传凭据或私人文章。
+<details>
+<summary><strong>头像或封面不显示？</strong></summary>
+
+图片应放在博客 `source/` 目录中，配置路径必须与生成后的网站路径一致。首页封面需要在文章 Front Matter 中填写 `cover` 或 `thumbnail`，正文首图不会自动成为封面。
+</details>
+
+<details>
+<summary><strong>我改了配置，页面为什么没有变化？</strong></summary>
+
+先确认修改的是站点配置 `_config.yml` 还是主题覆盖配置 `_config.milo.yml`。修改配置后重启 Hexo Server；必要时清理缓存并重新生成。
+</details>
+
+<details>
+<summary><strong>首页一页显示多少篇文章？</strong></summary>
+
+由 Hexo 分页设置控制，Milo 不会写死数量。可在博客 `_config.yml` 设置 `per_page: 6`；如果有 `index_generator.per_page`，它会覆盖首页设置，请同步调整或删除覆盖项。
+</details>
+
+<details>
+<summary><strong>为什么线上访问不存在的页面没有显示 Milo 的 404 页？</strong></summary>
+
+Milo 可以生成 `404.html`，但是否返回 HTTP 404 以及如何展示，取决于你使用的托管平台。需要查看平台的 404 规则。
+</details>
+
+## 项目与许可证
+
+- [GitHub 项目仓库](https://github.com/tanwenhaodotcom/hexo-theme-milo)
+- [版本发布与下载](https://github.com/tanwenhaodotcom/hexo-theme-milo/releases)
+- [提交问题与建议](https://github.com/tanwenhaodotcom/hexo-theme-milo/issues)
+- [贡献指南](CONTRIBUTING.md)
+- [MIT 许可证](LICENSE)
+
+Milo 由项目维护者负责需求、设计、验收和发布，主要借助 OpenAI Codex 完成代码编写、调试与测试。该项目不是 OpenAI 官方开发、认证或担保的产品。

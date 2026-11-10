@@ -201,12 +201,17 @@ async function until(check,label){const started=Date.now();for(let i=0;i<100;i++
     }
     async function checkCoverSizing(width,mode){
       await navigate('');
+      if(width>800){
+        const baseline=await evaluate(`(()=>{const first=document.querySelector('#main>.entry'),cover=first.querySelector('.cover'),profile=document.querySelector('.profile');return {delta:cover?cover.getBoundingClientRect().top-profile.getBoundingClientRect().top:null,others:[...document.querySelectorAll('.entry .cover')].filter(c=>c.closest('.entry')!==first).map(c=>getComputedStyle(c).alignSelf)}})()`);
+        if(baseline.delta!==null)assert.ok(Math.abs(baseline.delta)<1,'First cover aligns with author card');
+        for(const align of baseline.others)assert.equal(align,'center','Other article covers remain centered');
+      }
       const actual=await evaluate(`(()=>[...document.querySelectorAll('.entry .cover')].map(cover=>{const img=cover.querySelector('img'),r=cover.getBoundingClientRect(),i=img.getBoundingClientRect(),style=getComputedStyle(cover);return {container:r.height,image:i.height,width:r.width,align:style.alignSelf,parentAlign:getComputedStyle(cover.parentElement).alignItems,radius:style.borderRadius,overflow:style.overflow}}))()`);
       for(const item of actual)assert.ok(Math.abs(item.container-item.image)<1,'Actual cover stretched: '+JSON.stringify(item));
       const cases=await evaluate(`(async()=>{
         const main=document.querySelector('#main'),entry=main.querySelector('.entry').cloneNode(true);
         // 只改变文章内容，保留原滚动条。
-        main.style.minHeight=main.getBoundingClientRect().height+'px';main.replaceChildren(entry);
+        main.style.minHeight=main.getBoundingClientRect().height+'px';const first=document.createElement('article');first.className='entry';main.replaceChildren(first,entry);
         const copy=entry.querySelector('.entry-copy'),cover=entry.querySelector('.cover'),img=cover.querySelector('img');
         const measure=()=>{const r=cover.getBoundingClientRect(),i=img.getBoundingClientRect(),c=copy.getBoundingClientRect(),e=entry.getBoundingClientRect(),style=getComputedStyle(cover),row=getComputedStyle(entry);return {width:r.width,height:r.height,imageHeight:i.height,top:r.top,imageTop:i.top,copyTop:c.top,copyHeight:c.height,copyWidth:c.width,titleWidth:copy.querySelector('h2').getBoundingClientRect().width,titleBottom:copy.querySelector('h2').getBoundingClientRect().bottom,summaryTop:copy.querySelector('p').getBoundingClientRect().top,coverBottom:r.bottom,left:r.left,align:style.alignSelf,overflow:style.overflow,radii:[style.borderTopLeftRadius,style.borderTopRightRadius,style.borderBottomLeftRadius,style.borderBottomRightRadius],fit:getComputedStyle(img).objectFit,rowHeight:e.height,expectedHeight:Math.max(c.height,r.height)+parseFloat(row.paddingBottom)+parseFloat(row.borderBottomWidth),gap:row.gap,padding:row.paddingBottom,margin:row.marginBottom}};
         const results=[];
@@ -231,6 +236,30 @@ async function until(check,label){const started=Date.now();for(let i=0;i<100;i++
         for(const key of ['width','height','left','gap','padding','margin'])assert.equal(item[key],first[key],key+' varies with copy length');
         assert.ok(Math.abs(item.rowHeight-item.expectedHeight)<1,'Row should size naturally');
       }}
+    }
+    async function checkTitleWrapping(width){
+      await navigate('');
+      const words=await evaluate(`(()=>[...document.querySelectorAll('.entry h2 .title-word')].map(word=>{const r=word.getBoundingClientRect(),range=document.createRange();range.selectNodeContents(word);return {lines:new Set([...range.getClientRects()].map(rect=>rect.top)).size,inside:r.left>=0 && r.right<=innerWidth}}))()`);
+      assert.ok(words.length>0,'Built Chinese titles contain word boundaries');
+      for(const word of words){assert.equal(word.lines,1,'Short Chinese word stays on one line');assert.equal(word.inside,true,'Protected word stays in viewport at '+width)}
+      const result=await evaluate(`(()=>{
+        const entry=document.querySelector('.entry-copy'),saved=entry.innerHTML,savedClass=entry.className,results=[];
+        for(const covered of [false,true])for(const title of ['设计手记：从寻找灵感，到和伙伴一起完善自己的 Hexo 主题','一段关于城市漫步与日常阅读的长标题：让每一行文字都有从容的节奏']){
+          entry.classList.toggle('has-cover',covered);
+          entry.innerHTML='<div class="meta">设计笔记 · 2026-01-01</div><h2><a href="#"></a></h2>'+(covered?'<a class="cover"><img width="300" height="180" alt=""></a>':'')+'<p>'+('中性摘要用于检查长文本阅读节奏。'.repeat(20))+'</p>';
+          const heading=entry.querySelector('h2'),link=heading.querySelector('a');link.textContent=title;
+          const node=link.firstChild,lines=new Map();
+          for(let i=0;i<node.length;i++){const range=document.createRange();range.setStart(node,i);range.setEnd(node,i+1);const top=range.getBoundingClientRect().top;lines.set(top,(lines.get(top)||'')+node.textContent[i])}
+          const rect=heading.getBoundingClientRect();
+          results.push({lines:[...lines.values()].map(line=>line.trim()),inside:rect.left>=0 && rect.right<=innerWidth,overflow:entry.scrollWidth>entry.clientWidth+1});
+        }
+        entry.innerHTML=saved;entry.className=savedClass;return results;
+      })()`);
+      for(const item of result){
+        assert.equal(item.inside,true,'Title stays in viewport at '+width);
+        assert.equal(item.overflow,false,'Long summary stays in column');
+        assert.ok(item.lines.at(-1).length>=2,'No isolated final character: '+JSON.stringify(item.lines));
+      }
     }
     async function checkHomeHeading(page){
       const heading=await evaluate(`(()=>{const h=document.querySelector('#main>h1'),style=getComputedStyle(h),entry=document.querySelector('.entry'),before=entry.getBoundingClientRect().top;h.remove();const after=entry.getBoundingClientRect().top;document.querySelector('#main').prepend(h);return {count:document.querySelectorAll('h1').length,text:h.textContent,hidden:h.hidden||h.getAttribute('aria-hidden')==='true',display:style.display,visibility:style.visibility,position:style.position,width:style.width,height:style.height,clip:style.clipPath,shift:after-before,title:document.querySelector('.brand').textContent.trim()}})()`);
@@ -289,6 +318,7 @@ async function until(check,label){const started=Date.now();for(let i=0;i<100;i++
         await send('Emulation.setDeviceMetricsOverride',{width,height:844,deviceScaleFactor:1,mobile:width<801});
         await send('Emulation.setEmulatedMedia',{features:[{name:'prefers-color-scheme',value:mode}]});
         await checkCoverSizing(width,mode);
+        await checkTitleWrapping(width);
       }
       assert.deepEqual(errors,[]);console.log('Passed cover sizing matrix.');return;
     }
@@ -322,8 +352,9 @@ async function until(check,label){const started=Date.now();for(let i=0;i<100;i++
       for(const mode of ['light','dark']){
         await evaluate('localStorage.setItem("milo-appearance",'+JSON.stringify(mode)+')');
         await navigate('');
-        const layout=await evaluate(`(()=>{const entry=document.querySelector('.entry'),r=entry.getBoundingClientRect(),profile=document.querySelector('.profile'),nav=document.querySelector('.topbar').getBoundingClientRect();return {heading:!!document.querySelector('#main .page-heading'),first:document.querySelector('#main>h1').nextElementSibling===entry,gap:r.top-nav.bottom,aligned:Math.abs(r.top-profile.getBoundingClientRect().top),width:innerWidth,overflow:document.documentElement.scrollWidth}})()`);
-        assert.equal(layout.heading,false);assert.equal(layout.first,true);assert.ok(Math.abs(layout.gap-(width<=800?34:56))<1);
+        const layout=await evaluate(`(()=>{const entry=document.querySelector('.entry'),r=entry.getBoundingClientRect(),profile=document.querySelector('.profile'),nav=document.querySelector('.topbar').getBoundingClientRect(),identity=document.querySelector('.mobile-identity'),visible=identity&&getComputedStyle(identity).display!=='none';return {heading:!!document.querySelector('#main .page-heading'),first:document.querySelector('#main>h1').nextElementSibling===entry,gap:r.top-nav.bottom,identityHeight:visible?identity.getBoundingClientRect().height:0,identityGap:visible?parseFloat(getComputedStyle(document.querySelector('.columns')).rowGap):0,aligned:Math.abs(r.top-profile.getBoundingClientRect().top),width:innerWidth,overflow:document.documentElement.scrollWidth}})()`);
+        assert.equal(layout.heading,false);assert.equal(layout.first,true);if(layout.identityHeight)assert.equal(layout.identityGap,20);
+        assert.ok(Math.abs(layout.gap-(width<=800?34+layout.identityHeight+layout.identityGap:56))<1);
         if(width>800)assert.ok(layout.aligned<1,'First article and author card align');
         assert.equal(layout.width,width);assert.ok(layout.overflow<=width);
         await checkHomeHeading(1);
@@ -338,11 +369,11 @@ async function until(check,label){const started=Date.now();for(let i=0;i<100;i++
         const searchReady=loaded();await evaluate('document.querySelector(".not-found-secondary").click()');await searchReady;
         assert.equal(await evaluate('!!document.querySelector(".search-form")'),true);
         // 普通页搜索仍使用原生表单提交并携带关键词。
-        await navigate('');if(width<801)await evaluate('document.querySelector(".mobile-search").click()');
+        await navigate('');await evaluate('document.querySelector(".search-toggle").click()');
         const submitted=loaded();await evaluate('document.querySelector(".nav-search input").value="代码";document.querySelector(".nav-search").requestSubmit()');await submitted;
         await until(async()=>await evaluate('document.querySelector("#search-q")?.value==="代码" && document.querySelectorAll(".search-result").length>0'),'search results');
-        assert.equal(await evaluate('document.querySelectorAll("input[type=search]").length'),1);
-        assert.equal(await evaluate('!!document.querySelector(".nav-search,.mobile-search")'),false);
+        assert.equal(await evaluate('document.querySelectorAll("input[type=search]").length'),2);
+        assert.equal(await evaluate('document.querySelector(".search-toggle").getAttribute("aria-expanded")'),'false');
         assert.ok(await evaluate('document.querySelectorAll(".search-result mark").length')>0);
         assert.equal(await evaluate('innerWidth'),width);
         await screenshot('milo-search-after-'+width+'-'+mode);
@@ -356,6 +387,7 @@ async function until(check,label){const started=Date.now();for(let i=0;i<100;i++
           if(matches.some(p=>(p.title+' '+p.content).toLocaleLowerCase().includes(query.toLocaleLowerCase())))assert.ok(await evaluate('document.querySelectorAll(".search-result mark").length')>0,query+' literal highlight');
         }
         await checkCoverSizing(width,mode);
+        await checkTitleWrapping(width);
         await checkSummaryEntities();
         await checkScreenshotImages(width,mode);
         await checkSidebar(width,mode);
