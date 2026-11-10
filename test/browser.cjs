@@ -187,6 +187,35 @@ async function until(check,label){for(let i=0;i<100;i++){try{const value=await c
       }
       assert.deepEqual(errors,[]);return;
     }
+    async function checkCoverSizing(width,mode){
+      await navigate('');
+      const actual=await evaluate(`(()=>[...document.querySelectorAll('.entry .cover')].map(cover=>{const img=cover.querySelector('img'),r=cover.getBoundingClientRect(),i=img.getBoundingClientRect(),style=getComputedStyle(cover);return {container:r.height,image:i.height,width:r.width,align:style.alignSelf,parentAlign:getComputedStyle(cover.parentElement).alignItems,radius:style.borderRadius,overflow:style.overflow}}))()`);
+      for(const item of actual)assert.ok(Math.abs(item.container-item.image)<1,'Actual cover stretched: '+JSON.stringify(item));
+      const cases=await evaluate(`(async()=>{
+        const main=document.querySelector('#main'),entry=main.querySelector('.entry').cloneNode(true);main.replaceChildren(entry);
+        const copy=entry.querySelector('.entry-copy'),cover=entry.querySelector('.cover'),img=cover.querySelector('img');
+        const measure=()=>{const r=cover.getBoundingClientRect(),i=img.getBoundingClientRect(),c=copy.getBoundingClientRect(),e=entry.getBoundingClientRect(),style=getComputedStyle(cover),row=getComputedStyle(entry);return {width:r.width,height:r.height,imageHeight:i.height,top:r.top,imageTop:i.top,left:r.left,align:style.alignSelf,overflow:style.overflow,radii:[style.borderTopLeftRadius,style.borderTopRightRadius,style.borderBottomLeftRadius,style.borderBottomRightRadius],fit:getComputedStyle(img).objectFit,rowHeight:e.height,expectedHeight:Math.max(c.height,r.height)+parseFloat(row.paddingBottom)+parseFloat(row.borderBottomWidth),gap:row.gap,padding:row.paddingBottom,margin:row.marginBottom}};
+        const results=[];
+        for(const fit of ['cover','contain'])for(const [w,h] of [[1200,400],[300,900],[600,600]]){
+          cover.classList.toggle('cover-contain',fit==='contain');
+          await new Promise(resolve=>{img.onload=resolve;img.src='data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="'+w+'" height="'+h+'"><rect width="100%" height="100%" fill="#1764b0"/></svg>')});
+          const variants=[];
+          for(const [title,text] of [['短文','一则短札。'],['普通标题','这是一段较长的文章摘要，用于确认文字自然换行之后不会拉长封面的裁剪区域。'.repeat(8)],['用于检查窄屏上长标题多行换行的文章标题'.repeat(5),'常规摘要。']]){
+            copy.querySelector('h2 a').textContent=title;copy.querySelector('p').textContent=text;variants.push(measure());
+          }
+          results.push({fit,variants});
+        }
+        cover.remove();const noCover={count:entry.querySelectorAll('.cover').length,overflow:entry.scrollWidth<=entry.clientWidth};
+        return {results,noCover,viewport:innerWidth,overflow:document.documentElement.scrollWidth};
+      })()`);
+      assert.ok(actual.length>0);assert.equal(cases.viewport,width);assert.ok(cases.overflow<=width);assert.equal(cases.noCover.count,0);assert.equal(cases.noCover.overflow,true);
+      for(const {fit,variants} of cases.results){const first=variants[0];for(const item of variants){
+        assert.equal(item.align,'flex-start');assert.equal(item.fit,fit);assert.equal(item.overflow,'hidden');assert.ok(item.radii.every(r=>parseFloat(r)>0));
+        assert.ok(Math.abs(item.height-item.imageHeight)<1);assert.ok(Math.abs(item.top-item.imageTop)<1);assert.ok(Math.abs(item.width/item.height-5/3)<0.02);
+        for(const key of ['width','height','top','left','gap','padding','margin'])assert.equal(item[key],first[key],key+' varies with copy length');
+        assert.ok(Math.abs(item.rowHeight-item.expectedHeight)<1,'Row should size naturally');
+      }}
+    }
     async function checkHomeHeading(page){
       const heading=await evaluate(`(()=>{const h=document.querySelector('#main>h1'),style=getComputedStyle(h),entry=document.querySelector('.entry'),before=entry.getBoundingClientRect().top;h.remove();const after=entry.getBoundingClientRect().top;document.querySelector('#main').prepend(h);return {count:document.querySelectorAll('h1').length,text:h.textContent,hidden:h.hidden||h.getAttribute('aria-hidden')==='true',display:style.display,visibility:style.visibility,position:style.position,width:style.width,height:style.height,clip:style.clipPath,shift:after-before,title:document.querySelector('.brand').textContent.trim()}})()`);
       assert.equal(heading.count,1);assert.equal(heading.text,heading.title+' · 文章列表'+(page>1?' · 第 '+page+' 页':''));
@@ -238,6 +267,14 @@ async function until(check,label){for(let i=0;i<100;i++){try{const value=await c
         await checkScreenshotImages(width,mode);
       }
       assert.deepEqual(errors,[]);console.log('Passed screenshot image viewport/theme matrix.');return;
+    }
+    if(process.env.MILO_TEST_COVERS_ONLY==='1'){
+      for(const width of [1280,390,360,320])for(const mode of ['light','dark']){
+        await send('Emulation.setDeviceMetricsOverride',{width,height:844,deviceScaleFactor:1,mobile:width<801});
+        await send('Emulation.setEmulatedMedia',{features:[{name:'prefers-color-scheme',value:mode}]});
+        await checkCoverSizing(width,mode);
+      }
+      assert.deepEqual(errors,[]);console.log('Passed cover sizing matrix.');return;
     }
     let combinations=0;
     for(const width of [1280,390,360,320]){
@@ -302,6 +339,7 @@ async function until(check,label){for(let i=0;i<100;i++){try{const value=await c
           assert.deepEqual(await evaluate('[...document.querySelectorAll(".search-result h2")].map(h=>h.textContent)'),matches.map(p=>p.title),'Original filter/order: '+query);
           if(matches.some(p=>(p.title+' '+p.content).toLocaleLowerCase().includes(query.toLocaleLowerCase())))assert.ok(await evaluate('document.querySelectorAll(".search-result mark").length')>0,query+' literal highlight');
         }
+        await checkCoverSizing(width,mode);
         await checkSummaryEntities();
         await checkScreenshotImages(width,mode);
         await checkSidebar(width,mode);
