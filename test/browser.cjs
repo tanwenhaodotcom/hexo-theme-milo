@@ -3,7 +3,8 @@
 const fs=require('node:fs/promises'),path=require('node:path'),os=require('node:os'),cp=require('node:child_process'),assert=require('node:assert/strict');
 const site=new URL(process.env.MILO_PREVIEW_URL || 'http://localhost:4000/');
 const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
-async function until(check,label){for(let i=0;i<100;i++){try{const value=await check();if(value)return value}catch(e){}await wait(100)}throw Error('Timeout: '+label)}
+let timeoutSnapshot;
+async function until(check,label){const started=Date.now();for(let i=0;i<100;i++){try{const value=await check();if(value)return value}catch(e){}await wait(100)}throw Error('Timeout: '+label+'; elapsed='+String(Date.now()-started)+'ms; state='+JSON.stringify(await timeoutSnapshot?.()))}
 (async()=>{
   if(typeof WebSocket==='undefined')throw Error('Browser tests require Node.js 22+ (validated on Node.js 26).');
   let executable=process.env.MILO_BROWSER;
@@ -23,6 +24,7 @@ async function until(check,label){for(let i=0;i<100;i++){try{const value=await c
     ws.onmessage=event=>{const message=JSON.parse(event.data);if(message.method==='Page.loadEventFired')load?.();if(message.method==='Fetch.requestPaused')onRequest?.(message.params);if(message.method==='Runtime.exceptionThrown')errors.push(message.params.exceptionDetails.text);if(message.id){const task=pending.get(message.id);if(!task)return;pending.delete(message.id);clearTimeout(task.timer);message.error?task.reject(Error(JSON.stringify(message.error))):task.resolve(message.result)}};
     const send=(method,params={})=>new Promise((resolve,reject)=>{const n=++id,timer=setTimeout(()=>{pending.delete(n);reject(Error('Browser command timeout: '+method))},15000);pending.set(n,{resolve,reject,timer});ws.send(JSON.stringify({id:n,method,params}))});
     const evaluate=async expression=>{const result=await send('Runtime.evaluate',{expression,returnByValue:true,awaitPromise:true});if(result.exceptionDetails)throw Error(JSON.stringify(result.exceptionDetails));return result.result.value};
+    timeoutSnapshot=()=>evaluate(`(()=>({url:location.href,width:innerWidth,y:scrollY,focus:document.activeElement?.id,toc:document.querySelector('.mobile-toc')?.open,loadCount:sessionStorage.getItem('milo-test-loads'),progress:document.querySelector('progress')?.value,links:[...document.querySelectorAll('.mobile-toc a')].slice(0,3).map(a=>({hash:a.hash,current:a.getAttribute('aria-current'),top:document.getElementById(decodeURIComponent(a.hash.slice(1)))?.getBoundingClientRect().top}))}))()`);
     const loaded=()=>new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(Error('Page load timeout')),15000);load=()=>{clearTimeout(timer);resolve()}});
     const navigate=async route=>{await send('Page.bringToFront');const ready=loaded();await send('Page.navigate',{url:new URL(route,site).href});await ready;await wait(100)};
     const screenshot=async name=>{if(!process.env.MILO_SCREENSHOT_DIR)return;await fs.mkdir(process.env.MILO_SCREENSHOT_DIR,{recursive:true});const shot=await send('Page.captureScreenshot',{format:'png'});await fs.writeFile(path.join(process.env.MILO_SCREENSHOT_DIR,name+'.png'),Buffer.from(shot.data,'base64'))};
@@ -42,11 +44,17 @@ async function until(check,label){for(let i=0;i<100;i++){try{const value=await c
       archive.groups.forEach(group=>assert.deepEqual(group.dates,[...group.dates].sort().reverse()));
       assert.equal((await fetch(new URL('archives/page/2/',site))).status,404);
       await navigate('posts/long-reading/');
-      const progress=await evaluate(`(()=>{const p=document.querySelector('.reading-progress'),r=p.getBoundingClientRect();return {width:r.width,height:r.height,bottom:r.bottom,pointer:getComputedStyle(p).pointerEvents,percent:getComputedStyle(p.querySelector('span')).display,value:p.querySelector('progress').value}})()`);
+      const progress=await evaluate(`(()=>{const p=document.querySelector('.reading-progress'),r=p.getBoundingClientRect();return {width:r.width,viewportWidth:document.documentElement.clientWidth,height:r.height,top:r.top,bottom:r.bottom,nav:document.querySelector('.topbar').getBoundingClientRect().bottom,pointer:getComputedStyle(p).pointerEvents,percent:getComputedStyle(p.querySelector('span')).display,value:p.querySelector('progress').value}})()`);
       assert.equal(progress.pointer,'none');assert.equal(progress.value,0);
       if(mobile){
-        assert.equal(progress.width,width);assert.equal(progress.height,3);assert.equal(progress.bottom,844);assert.equal(progress.percent,'none');
-        if(safeArea){await send('Emulation.setSafeAreaInsetsOverride',{insets:{bottom:24}});assert.equal(await evaluate('document.querySelector(".reading-progress").getBoundingClientRect().bottom'),820);await send('Emulation.setSafeAreaInsetsOverride',{insets:{}})}
+        assert.equal(progress.width,progress.viewportWidth);assert.equal(progress.height,3);assert.ok(Math.abs(progress.top-progress.nav)<1);assert.equal(progress.percent,'none');
+        if(safeArea){
+          await send('Emulation.setSafeAreaInsetsOverride',{insets:{top:24,bottom:24}});
+          await evaluate("document.querySelector('.topbar').style.paddingTop='env(safe-area-inset-top)'");
+          await until(async()=>await evaluate("Math.abs(document.querySelector('.reading-progress').getBoundingClientRect().top-document.querySelector('.topbar').getBoundingClientRect().bottom)<1"),'safe-area navigation alignment');
+          await evaluate("document.querySelector('.topbar').style.paddingTop=''");await send('Emulation.setSafeAreaInsetsOverride',{insets:{}});
+          await until(async()=>await evaluate("Math.abs(document.querySelector('.reading-progress').getBoundingClientRect().top-document.querySelector('.topbar').getBoundingClientRect().bottom)<1"),'navigation alignment reset');
+        }
         await evaluate('document.querySelector(".mobile-toc summary").click()');
         const toc=await evaluate(`(()=>{const toc=document.querySelector('.mobile-toc'),nav=toc.querySelector('nav'),links=[...nav.querySelectorAll('a')];return {open:toc.open,height:nav.clientHeight,scrollHeight:nav.scrollHeight,width:nav.clientWidth,scrollWidth:nav.scrollWidth,levels:links.slice(0,3).map(a=>a.getBoundingClientRect().left)}})()`);
         assert.equal(toc.open,true);assert.ok(toc.height<=422);assert.ok(toc.scrollHeight>toc.height);assert.ok(toc.scrollWidth<=toc.width+1);assert.ok(toc.levels[0]<toc.levels[1] && toc.levels[1]<toc.levels[2]);
@@ -65,8 +73,12 @@ async function until(check,label){for(let i=0;i<100;i++){try{const value=await c
         }
       }else{
         assert.ok(progress.width<200 && progress.height>20);assert.notEqual(progress.percent,'none');
-        assert.notEqual(await evaluate('getComputedStyle(document.querySelector(".toc-sidebar")).display'),'none');
+        assert.equal(await evaluate('getComputedStyle(document.querySelector(".toc-sidebar")).display'),width<=900?'none':'block');
       }
+      await evaluate("(()=>{const r=document.querySelector('#post-content').getBoundingClientRect(),offset=parseFloat(document.documentElement.style.getPropertyValue('--reading-offset')),distance=r.height-Math.max(0,innerHeight-offset);scrollTo({top:scrollY+r.top-offset+distance/2,behavior:'instant'})})()");
+      await until(async()=>await evaluate('document.querySelector("progress").value===50'),'reading midpoint');
+      if(mobile)assert.ok(await evaluate("Math.abs(document.querySelector('.reading-progress').getBoundingClientRect().top-document.querySelector('.topbar').getBoundingClientRect().bottom)<1"));
+      await screenshot('milo-top-progress-'+width+'-'+mode);
       await evaluate('scrollTo({top:document.body.scrollHeight,behavior:"instant"})');
       await until(async()=>await evaluate('document.querySelector("progress").value===100'),'reading progress');
       await navigate('posts/code-lab/');
@@ -99,6 +111,9 @@ async function until(check,label){for(let i=0;i<100;i++){try{const value=await c
       await until(async()=>await evaluate('!document.querySelector("dialog").open && document.activeElement===document.querySelectorAll("#post-content .lightbox-image")[1]'),'lightbox close/focus');
       assert.equal(await evaluate('document.querySelector("#post-content a img").hasAttribute("role")'),false);
       assert.equal(await evaluate('document.querySelector("#post-content img[data-no-lightbox]").classList.contains("lightbox-image")'),false);
+      await navigate('posts/short-note/');
+      await until(async()=>await evaluate('document.querySelector("progress").value===100'),'short article fully visible');
+      if(mobile)assert.ok(await evaluate("Math.abs(document.querySelector('.reading-progress').getBoundingClientRect().top-document.querySelector('.topbar').getBoundingClientRect().bottom)<1"));
     }
     async function checkSearchWrap(width,mode){
       const post=posts.find(p=>p.url.endsWith('/posts/long-title/'));
@@ -168,7 +183,7 @@ async function until(check,label){for(let i=0;i<100;i++){try{const value=await c
     }
     if(process.env.MILO_TEST_SIDEBAR_ONLY==='1'){
       for(const width of [1280,900,801,390,360]){
-        await send('Emulation.setDeviceMetricsOverride',{width,height:844,deviceScaleFactor:1,mobile:width<600});
+        await send('Emulation.setDeviceMetricsOverride',{width,height:844,deviceScaleFactor:1,mobile:width<=800});
         await navigate('');
         for(const mode of ['light','dark']){await evaluate('localStorage.setItem("milo-appearance",'+JSON.stringify(mode)+')');await checkSidebar(width,mode)}
         console.log('Sidebar passed: '+width+'px, light/dark, author flow, sticky range/parent boundary, disabled/mobile behavior and article TOC.');
@@ -192,7 +207,9 @@ async function until(check,label){for(let i=0;i<100;i++){try{const value=await c
       const actual=await evaluate(`(()=>[...document.querySelectorAll('.entry .cover')].map(cover=>{const img=cover.querySelector('img'),r=cover.getBoundingClientRect(),i=img.getBoundingClientRect(),style=getComputedStyle(cover);return {container:r.height,image:i.height,width:r.width,align:style.alignSelf,parentAlign:getComputedStyle(cover.parentElement).alignItems,radius:style.borderRadius,overflow:style.overflow}}))()`);
       for(const item of actual)assert.ok(Math.abs(item.container-item.image)<1,'Actual cover stretched: '+JSON.stringify(item));
       const cases=await evaluate(`(async()=>{
-        const main=document.querySelector('#main'),entry=main.querySelector('.entry').cloneNode(true);main.replaceChildren(entry);
+        const main=document.querySelector('#main'),entry=main.querySelector('.entry').cloneNode(true);
+        // Keep the original scrollbar while varying only the article copy.
+        main.style.minHeight=main.getBoundingClientRect().height+'px';main.replaceChildren(entry);
         const copy=entry.querySelector('.entry-copy'),cover=entry.querySelector('.cover'),img=cover.querySelector('img');
         const measure=()=>{const r=cover.getBoundingClientRect(),i=img.getBoundingClientRect(),c=copy.getBoundingClientRect(),e=entry.getBoundingClientRect(),style=getComputedStyle(cover),row=getComputedStyle(entry);return {width:r.width,height:r.height,imageHeight:i.height,top:r.top,imageTop:i.top,copyTop:c.top,copyHeight:c.height,copyWidth:c.width,titleWidth:copy.querySelector('h2').getBoundingClientRect().width,titleBottom:copy.querySelector('h2').getBoundingClientRect().bottom,summaryTop:copy.querySelector('p').getBoundingClientRect().top,coverBottom:r.bottom,left:r.left,align:style.alignSelf,overflow:style.overflow,radii:[style.borderTopLeftRadius,style.borderTopRightRadius,style.borderBottomLeftRadius,style.borderBottomRightRadius],fit:getComputedStyle(img).objectFit,rowHeight:e.height,expectedHeight:Math.max(c.height,r.height)+parseFloat(row.paddingBottom)+parseFloat(row.borderBottomWidth),gap:row.gap,padding:row.paddingBottom,margin:row.marginBottom}};
         const results=[];
@@ -279,7 +296,7 @@ async function until(check,label){for(let i=0;i<100;i++){try{const value=await c
       assert.deepEqual(errors,[]);console.log('Passed cover sizing matrix.');return;
     }
     let combinations=0;
-    for(const width of [1280,390,360,320]){
+    for(const width of [1280,801,800,480,390,360,320]){
       await send('Emulation.setDeviceMetricsOverride',{width,height:844,deviceScaleFactor:1,mobile:width<600});
       await navigate('');
       const home=await evaluate(`(()=>{const nav=document.querySelector('.topbar').getBoundingClientRect(),heading=document.querySelector('.entry').getBoundingClientRect(),entries=[...document.querySelectorAll('.entry')];return {y:scrollY,width:innerWidth,clientWidth:document.documentElement.clientWidth,headingTop:heading.top,navBottom:nav.bottom,count:entries.length,rows:entries.map(e=>{const r=e.getBoundingClientRect(),copy=e.querySelector('.entry-copy');return {top:r.top,bottom:r.bottom,width:copy.clientWidth,scroll:copy.scrollWidth}})}})()`);

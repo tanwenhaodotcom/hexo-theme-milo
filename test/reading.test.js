@@ -114,3 +114,16 @@ test('optional lightbox supports keyboard, close and focus return, preserving li
   assert.equal(disabled.d.querySelector('.lightbox-image'),null);
   disabled.dom.window.close();
 });
+
+
+test('navigation observer tracks border-box changes without extra scroll listeners',async()=>{
+  const observed=[];let scrollListeners=0;
+  const {dom,d}=await setup(true,w=>{
+    w.ResizeObserver=class{observe(element,options){observed.push({element,options})}};
+    const add=w.addEventListener.bind(w);w.addEventListener=(type,...args)=>{if(type==='scroll')scrollListeners++;return add(type,...args)};
+  });
+  const nav=observed.find(item=>item.element===d.querySelector('.topbar'));
+  assert.equal(nav.options.box,'border-box');assert.equal(scrollListeners,1);
+  assert.equal(d.documentElement.style.getPropertyValue('--reading-offset'),'96px');
+  dom.window.close();
+});

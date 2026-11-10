@@ -24,7 +24,7 @@
 .search-highlight{color:var(--accent);background:var(--soft);font-weight:600;border-radius:3px}
 @media(max-width:800px){.not-found{margin:48px auto 64px}.not-found h1{font-size:24px}}
 
-@media(max-width:800px){.reading-progress{left:0;right:0;bottom:0;bottom:env(safe-area-inset-bottom,0px);height:3px;display:block;gap:0;padding:0;border:0;border-radius:0;background:var(--soft);box-shadow:none}.reading-progress progress{display:block;width:100%;height:3px;border-radius:0}.reading-progress span{display:none}}
+@media(max-width:800px){.reading-progress{left:0;right:0;top:calc(var(--reading-offset,16px) - 16px);bottom:auto;height:3px;display:block;gap:0;padding:0;border:0;border-radius:0;background:var(--soft);box-shadow:none}.reading-progress progress{display:block;width:100%;height:3px;border-radius:0}.reading-progress span{display:none}}
 
 .sidebar-sticky{--sidebar-sticky-top:calc(64px + 1px + 24px);display:flow-root;margin-top:30px}.sidebar-sticky>.side-section:first-child{margin-top:0}
 /* The desktop navigation is 64px plus its 1px border; keep 24px clear below it. */

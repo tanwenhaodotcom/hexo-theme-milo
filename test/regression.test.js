@@ -131,6 +131,8 @@ test('Hexo builds: canonical, Disqus, pagination totals and navigation',async()=
           const other=new JSDOM(await html(route)).window.document;
           assert.ok(other.querySelector('.page-heading h1'),route+' keeps its heading');
         }
+        assert.ok(home.querySelector('.footer').textContent.includes('Hexo '+hexo.version));
+        assert.ok(home.querySelector('.footer').textContent.includes('Milo '+require('../package.json').version));
         const sticky=home.querySelector('.sidebar>.sidebar-sticky.is-sticky');
         assert.ok(sticky);
         assert.equal(sticky.querySelector('.profile'),null);
