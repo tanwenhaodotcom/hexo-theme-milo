@@ -109,3 +109,5 @@ hexo.extend.generator.register('milo-404',function(locals){
   if(fs.existsSync(path.join(hexo.source_dir,'404.html')) || locals.pages.toArray().some(page=>page.path==='404.html'))return [];
   return {path:'404.html',layout:['404'],data:{layout:'404',title:'页面未找到',description:'这个页面可能已被移走，或地址有一点小偏差。'}};
 });
+
+hexo.extend.helper.register('milo_versions', () => ({hexo: hexo.version, milo: require('../package.json').version}));
