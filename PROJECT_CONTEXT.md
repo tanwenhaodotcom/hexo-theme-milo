@@ -182,7 +182,19 @@ Milo 是独立的 Hexo 主题，当前基准版本为已发布的 v0.2.0，追�
 
 验证：npm run check、全部 10 组 npm test 回归通过（包括根目录及 /demo/ 实际 Hexo 构建）；测试复用独立预览的已安装依赖，通过 NODE_PATH 指定，未声称验证全新安装。npm run test:browser 完整 Chrome 套件通过 1280/390/360/320px、深浅色共 8 组组合；额外图片专项矩阵通过 1280/390/360px、深浅色 6 组，检查桌面浅色和手机深色截图。git diff --check 通过。Safari、Firefox、真实手机仍未实测，未知尺寸远程正文图片的原有布局位移限制不变。
 
-收尾状态：图片展示优化已通过用户阶段验收，整理为独立本地 Conventional Commit（feat: improve cover image display and screenshot styling），仅包含图片功能、回归测试及相关文档。此前已有的 layout/layout.ejs 与 scripts/milo.js 页脚版本信息修改保留为未提交状态，不纳入本轮提交。以已发布的 v0.2.0 为基准，不修改版本号、既有 Tag 或发布记录；不推送、不创建 Tag、不发布 Release、不部署网站。等待下一项开发任务。
+收尾状态：图片展示优化已通过用户阶段验收，整理为独立本地 Conventional Commit（feat: improve cover image display and screenshot styling），仅包含图片功能、回归测试及相关文档。该次图片提交未包含此前已有的 layout/layout.ejs 与 scripts/milo.js 页脚版本信息修改；页脚后续验收和提交状态见下节。以已发布的 v0.2.0 为基准，不修改版本号、既有 Tag 或发布记录；不推送、不创建 Tag、不发布 Release、不部署网站。等待下一项开发任务。
+
+## 页脚版本信息与首页摘要实体修复
+
+2026-11-10，页脚版本显示已通过用户验收，按顺序首先独立提交为 000f0ad（feat: display Hexo and Milo versions in footer），仅包含 layout/layout.ejs 与 scripts/milo.js 的既有页脚修改。构建期 helper 读取 Hexo 版本及主题 package.json 版本，模板保持安全转义；版权年份、自定义文本与 CSS 不变。
+
+随后修复首页摘要：原 milo_text 仅 stripHTML，实体会经 EJS 再次转义而以原文显示。现改为先去标签、再调用一次现有 unescapeHTML、最后规范空白；首页继续使用 <%= 安全输出。只改首页使用的 helper，不修改正文、搜索、SEO、Feed 或字数逻辑，不递归解码双重编码文本。
+
+- 新增真实 Hexo 构建回归，覆盖 excerpt 与 content 回退、URL 斜杠、&、单双引号、编码的 img/onerror 与 script、双重编码和空值；生成摘要必须保持纯文本，不产生 HTML 子元素。
+- 浏览器可复用真实构建摘要：npm test 和 npm run test:browser 设置同一个 MILO_ENTITY_FIXTURE_DIR，将根目录及 /demo/ 首页测试产物导出并在临时 iframe 中检查显示和脚本不执行；不修改预览文章或正式博客。
+- 语法检查及全部 11 组回归通过，含根目录与 /demo/ 实际构建，复用独立预览依赖（NODE_PATH）。Chrome 完整浏览器回归通过 1280/390/360/320px、深浅色共 8 组组合，同时使用上述根目录和 /demo/ 构建摘要验证实体文本、无 HTML 子元素及无脚本执行；git diff --check 通过。Safari、Firefox、真实手机未实测。
+
+开发状态：摘要修复已获用户授权整理为独立提交 fix: decode HTML entities in homepage excerpts。版本保持 0.2.0；未推送、创建 Tag、发布 Release 或部署。
 
 ## 后续计划（尚未完成）
 

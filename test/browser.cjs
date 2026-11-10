@@ -187,6 +187,18 @@ async function until(check,label){for(let i=0;i<100;i++){try{const value=await c
       }
       assert.deepEqual(errors,[]);return;
     }
+    // Set MILO_ENTITY_FIXTURE_DIR for npm test and this command to reuse real Hexo output.
+    async function checkSummaryEntities(){
+      if(!process.env.MILO_ENTITY_FIXTURE_DIR)return;
+      const expected=JSON.parse(await fs.readFile(path.join(process.env.MILO_ENTITY_FIXTURE_DIR,'expected.json'),'utf8'));
+      for(const name of ['root.html','demo.html']){
+        const html=await fs.readFile(path.join(process.env.MILO_ENTITY_FIXTURE_DIR,name),'utf8');
+        const paragraphs=html.match(/<p>github[\s\S]*?<\/p>/g);assert.equal(paragraphs?.length,2);
+        await navigate('');
+        const result=await evaluate(`(async()=>{const frame=document.createElement('iframe');frame.style.width='100%';document.querySelector('#main').append(frame);await new Promise(resolve=>{frame.onload=resolve;frame.srcdoc=${JSON.stringify(paragraphs.join(''))}});const d=frame.contentDocument;return {texts:[...d.querySelectorAll('p')].map(p=>p.textContent),elements:d.querySelectorAll('p>*').length,executed:!!frame.contentWindow.__miloXSS}})()`);
+        assert.deepEqual(result.texts,[expected,expected]);assert.equal(result.elements,0);assert.equal(result.executed,false);
+      }
+    }
     async function checkScreenshotImages(width,mode){
       await navigate('');
       const result=await evaluate(`(async()=>{
@@ -274,6 +286,7 @@ async function until(check,label){for(let i=0;i<100;i++){try{const value=await c
           assert.deepEqual(await evaluate('[...document.querySelectorAll(".search-result h2")].map(h=>h.textContent)'),matches.map(p=>p.title),'Original filter/order: '+query);
           if(matches.some(p=>(p.title+' '+p.content).toLocaleLowerCase().includes(query.toLocaleLowerCase())))assert.ok(await evaluate('document.querySelectorAll(".search-result mark").length')>0,query+' literal highlight');
         }
+        await checkSummaryEntities();
         await checkScreenshotImages(width,mode);
         await checkSidebar(width,mode);
         await checkSearchWrap(width,mode);

@@ -253,3 +253,41 @@ test('appearance keyboard navigation and focus lifecycle',async()=>{
   toggle.click();d.querySelector('#outside').click();assert.equal(menu.hidden,true);
   dom.window.close();
 });
+
+
+test('Homepage summaries decode entities once and keep EJS HTML escaping',async()=>{
+  const base=await fs.mkdtemp(path.join(os.tmpdir(),'milo-entities-'));
+  const encoded='github.com&#x2F;tanwenhaodotcom&#x2F;hexo-theme-milo &amp; &quot;quoted&quot; &#39;single&#39; &lt;img src=x onerror=window.__miloXSS=1&gt; &lt;script&gt;window.__miloXSS=1&lt;/script&gt; &amp;lt;b&amp;gt;';
+  const expected='github.com/tanwenhaodotcom/hexo-theme-milo & "quoted" \'single\' <img src=x onerror=window.__miloXSS=1> <script>window.__miloXSS=1</script> &lt;b&gt;';
+  try{
+    await fs.mkdir(path.join(base,'themes'),{recursive:true});
+    for(const entry of ['layout','source','_config.yml'])await fs.cp(path.join(theme,entry),path.join(base,'themes/milo',entry),{recursive:true});
+    await fs.mkdir(path.join(base,'scripts'),{recursive:true});
+    await fs.writeFile(path.join(base,'package.json'),JSON.stringify({hexo:{version:'8.0.0'}}));
+    const plugins=Object.keys(require('../package.json').devDependencies).filter(p=>p.startsWith('hexo-')).map(p=>require.resolve(p));
+    plugins.push(path.join(theme,'scripts/milo.js'));
+    await fs.writeFile(path.join(base,'scripts/plugins.js'),`for(const plugin of ${JSON.stringify(plugins)})await hexo.loadPlugin(plugin);`);
+    await fs.mkdir(path.join(base,'source/_posts'),{recursive:true});
+    for(const kind of ['excerpt','content'])await fs.writeFile(path.join(base,'source/_posts',kind+'.md'),'---\ntitle: '+kind+'\ndate: 2026-01-01\n---\n<p>'+encoded+'</p>'+(kind==='excerpt'?'\n<!-- more -->\nPrivate body':''));
+    for(const root of ['/','/demo/']){
+      await fs.writeFile(path.join(base,'_config.yml'),'title: Entities\nauthor: Author\nurl: https://example.com'+root+'\nroot: '+root+'\ntheme: milo\n');
+      const hexo=new Hexo(base,{silent:true});
+      try{
+        await hexo.init();await hexo.call('generate');
+        const text=hexo.extend.helper.get('milo_text');
+        assert.equal(text('<p>'+encoded+'</p>'),expected);
+        assert.equal(text('<b>Real markup</b>  &amp;  text'),'Real markup & text');
+        assert.equal(text(null),'');
+        const html=await fs.readFile(path.join(base,'public/index.html'),'utf8'),doc=new JSDOM(html).window.document;
+        const summaries=[...doc.querySelectorAll('.entry-copy>p')];assert.equal(summaries.length,2);
+        for(const summary of summaries){assert.equal(summary.textContent,expected);assert.equal(summary.children.length,0)}
+        assert.ok(html.includes('&lt;img src=x onerror=window.__miloXSS=1&gt;'));
+        if(process.env.MILO_ENTITY_FIXTURE_DIR){
+          await fs.mkdir(process.env.MILO_ENTITY_FIXTURE_DIR,{recursive:true});
+          await fs.writeFile(path.join(process.env.MILO_ENTITY_FIXTURE_DIR,root==='/'?'root.html':'demo.html'),html);
+          await fs.writeFile(path.join(process.env.MILO_ENTITY_FIXTURE_DIR,'expected.json'),JSON.stringify(expected));
+        }
+      }finally{await hexo.exit()}
+    }
+  }finally{await fs.rm(base,{recursive:true,force:true})}
+});
