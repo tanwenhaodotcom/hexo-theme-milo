@@ -29,3 +29,9 @@
 .sidebar-sticky{--sidebar-sticky-top:calc(64px + 1px + 24px);display:flow-root;margin-top:30px}.sidebar-sticky>.side-section:first-child{margin-top:0}
 /* The desktop navigation is 64px plus its 1px border; keep 24px clear below it. */
 @media(min-width:801px){.sidebar-sticky.is-sticky{position:sticky;top:var(--sidebar-sticky-top);max-height:calc(100vh - var(--sidebar-sticky-top) - 24px);max-height:calc(100dvh - var(--sidebar-sticky-top) - 24px);overflow-y:auto;scrollbar-width:thin;overscroll-behavior:contain}}
+
+/* Opt-in screenshot framing; inset outline preserves image dimensions. */
+.cover-contain{align-self:flex-start;background:var(--panel);box-shadow:0 2px 8px #0000000a}
+.cover-contain img{object-fit:contain}
+.cover-contain img,.prose img.milo-screenshot{outline:1px solid var(--line);outline-offset:-1px;border-radius:12px}
+.prose img.milo-screenshot{box-shadow:0 2px 8px #0000000a}

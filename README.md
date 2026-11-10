@@ -30,6 +30,28 @@ An independent Hexo theme built with EJS, native CSS and JavaScript. No frontend
 
 文章可使用 cover 或 thumbnail、toc: false、comments: false。目录由 Markdown 标题自动生成。总字数按中文字符和英文单词计算，不含 HTML 标记与标点。
 
+### 首页封面与正文截图
+
+首页仅使用文章 Front Matter 的 `cover`，未设置时使用 `thumbnail`；不会自动提取正文首图。正文 Markdown/HTML 图片只显示在正文中，设置封面也不会自动插入正文。
+
+`cover_fit` 仅接受 `cover`（默认，摄影图片填满 5:3 区域，可能裁剪）和 `contain`（截图完整等比显示，允许留白）。缺省或其他值均回退 `cover`。两种模式保留相同的封面占位比例；contain 自动添加克制的边界、圆角和轻微阴影，适配深浅色。
+
+```yaml
+---
+title: 界面截图
+cover: /images/screenshot.png # 或 thumbnail，二者同时设置时 cover 优先
+cover_fit: contain
+---
+```
+
+正文截图按需使用 HTML，尺寸填写图片真实像素值；普通摄影图片无需添加 class。图片内容不会被主题修改。
+
+```html
+<img src="/images/screenshot.png" class="milo-screenshot" width="1200" height="800" alt="界面说明">
+```
+
+站点本地图片路径可由主题在构建时适配 /demo/；部署时仍需正确配置站点 url/root。加载失败时封面保留原有占位，不会自动换图。
+
 search.enable 关闭时隐藏搜索入口且不生成 search.json。comment.disqus.shortname 留空关闭评论；启用后需要读者主动点击才连接 Disqus。footer.custom_text 允许受信任的 HTML，不用于不可信访客输入。
 
 支持部署到 GitHub Pages 的子路径站点；站点 url 与 root 需按 Hexo 要求配置。此仓库只提供主题，hexo-admin 等后台属于博客自己的依赖。
@@ -72,7 +94,7 @@ MIT，见 LICENSE。
 
 搜索结果的标题和可见摘要会标记查询词，支持中文、英文、重复匹配及按空白分隔的多个高亮词。高亮只改变展示，不改变原有整串查询过滤、结果顺序或索引；正则特殊字符按字面处理，内容通过 DOM 文本节点和 mark 元素生成。
 
-保持独立预览运行后执行 npm run test:browser（Node.js 22+，已验证 Node.js 26），使用已安装的 Chrome/Edge 检查首页视口与滚动恢复、6+1 分页、404 和搜索。可用 MILO_BROWSER 指定浏览器、MILO_PREVIEW_URL 指定预览地址。设置 MILO_TEST_HMR=1 会临时追加并原样移除 CSS 注释，以验证热更新与滚动位置；MILO_SCREENSHOT_DIR 可指定截图目录。该浏览器测试不安装新依赖，也不会将浏览器滚动强制归零。
+保持独立预览运行后执行 npm run test:browser（Node.js 22+，已验证 Node.js 26），使用已安装的 Chrome/Edge 检查首页视口与滚动恢复、6+1 分页、404 和搜索。可用 MILO_BROWSER 指定浏览器、MILO_PREVIEW_URL 指定预览地址。设置 MILO_TEST_HMR=1 会临时追加并原样移除 CSS 注释，以验证热更新与滚动位置；MILO_SCREENSHOT_DIR 可指定截图目录。设置 MILO_TEST_IMAGES_ONLY=1 可单独检查截图封面、正文边界、多种图片比例与失败占位的桌面/360/390px 深浅色矩阵（浏览器内临时夹具，不修改文章）。该浏览器测试不安装新依赖，也不会将浏览器滚动强制归零。
 
 ## 桌面粘性侧栏
 

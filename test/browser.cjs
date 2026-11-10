@@ -187,6 +187,39 @@ async function until(check,label){for(let i=0;i<100;i++){try{const value=await c
       }
       assert.deepEqual(errors,[]);return;
     }
+    async function checkScreenshotImages(width,mode){
+      await navigate('');
+      const result=await evaluate(`(async()=>{
+        const main=document.querySelector('#main');main.innerHTML='<article class="entry"><div class="entry-copy">Screenshot fixture</div><a class="cover cover-contain"><img width="300" height="180" alt=""></a></article><div class="prose"><img class="milo-screenshot" width="1200" height="800" alt="Screenshot"></div>';
+        const cover=main.querySelector('.cover img'),body=main.querySelector('.prose img');
+        const box=img=>{const r=img.getBoundingClientRect();return [r.width,r.height]};
+        const before=box(cover),results=[];
+        for(const [w,h] of [[1200,400],[300,900],[600,600]]){
+          const src='data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="'+w+'" height="'+h+'"><rect width="100%" height="100%" fill="white"/></svg>');
+          await new Promise(resolve=>{cover.onload=resolve;cover.src=src});body.src=src;
+          results.push({box:box(cover),fit:getComputedStyle(cover).objectFit,natural:[cover.naturalWidth,cover.naturalHeight]});
+        }
+        await new Promise(resolve=>{cover.onerror=resolve;cover.src='data:image/png;base64,broken'});
+        const failed=box(cover),border=getComputedStyle(body).outlineWidth,framed=box(body);
+        body.classList.remove('milo-screenshot');const plain=box(body);
+        cover.parentElement.classList.remove('cover-contain');
+        return {before,results,failed,framed,plain,border,defaultFit:getComputedStyle(cover).objectFit,overflow:document.documentElement.scrollWidth,viewport:innerWidth,bodyWidth:framed[0],mainWidth:main.clientWidth};
+      })()`);
+      assert.ok(result.before[0]>0);assert.ok(Math.abs(result.before[0]/result.before[1]-5/3)<0.02);
+      for(const item of result.results){assert.equal(item.fit,'contain');assert.deepEqual(item.box,result.before);assert.ok(item.natural[0]>0)}
+      assert.deepEqual(result.failed,result.before);assert.deepEqual(result.framed,result.plain);
+      assert.equal(result.defaultFit,'cover');assert.equal(result.border,'1px');assert.equal(result.viewport,width);assert.ok(result.overflow<=width);assert.ok(result.bodyWidth<=result.mainWidth);
+      await evaluate(`(async()=>{const image=document.querySelector('.cover img');image.parentElement.classList.add('cover-contain');document.querySelector('.prose img').classList.add('milo-screenshot');image.src=document.querySelector('.prose img').src;await image.decode()})()`);
+      await screenshot('milo-screenshot-'+width+'-'+mode);
+    }
+    if(process.env.MILO_TEST_IMAGES_ONLY==='1'){
+      for(const width of [1280,390,360])for(const mode of ['light','dark']){
+        await send('Emulation.setDeviceMetricsOverride',{width,height:844,deviceScaleFactor:1,mobile:width<801});
+        await send('Emulation.setEmulatedMedia',{features:[{name:'prefers-color-scheme',value:mode}]});
+        await checkScreenshotImages(width,mode);
+      }
+      assert.deepEqual(errors,[]);console.log('Passed screenshot image viewport/theme matrix.');return;
+    }
     let combinations=0;
     for(const width of [1280,390,360,320]){
       await send('Emulation.setDeviceMetricsOverride',{width,height:844,deviceScaleFactor:1,mobile:width<600});
@@ -241,6 +274,7 @@ async function until(check,label){for(let i=0;i<100;i++){try{const value=await c
           assert.deepEqual(await evaluate('[...document.querySelectorAll(".search-result h2")].map(h=>h.textContent)'),matches.map(p=>p.title),'Original filter/order: '+query);
           if(matches.some(p=>(p.title+' '+p.content).toLocaleLowerCase().includes(query.toLocaleLowerCase())))assert.ok(await evaluate('document.querySelectorAll(".search-result mark").length')>0,query+' literal highlight');
         }
+        await checkScreenshotImages(width,mode);
         await checkSidebar(width,mode);
         await checkSearchWrap(width,mode);
         await checkReading(width,mode);

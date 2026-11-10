@@ -22,8 +22,8 @@ test('Hexo builds: canonical, Disqus, pagination totals and navigation',async()=
     await fs.mkdir(path.join(base,'source/images'),{recursive:true});
     await fs.copyFile(path.join(theme,'source/images/milo-social.png'),path.join(base,'source/images/cover.png'));
     await fs.writeFile(path.join(base,'source/images/portrait.svg'),'<svg xmlns="http://www.w3.org/2000/svg" width="300" height="900" viewBox="0 0 300 900"><rect width="300" height="900" fill="#1764b0"/></svg>');
-    const readingContent='\n\n## Reading chapter\n\n'+('A paragraph with **emphasis**, [a link](https://example.com) and `inline code`. 阅读体验测试。\n\n'.repeat(12))+'### Code example\n\n```js\nconst message = "Hello <Milo>";\nconsole.log(message);\n```\n\n#### Image examples\n\n![Preview](/images/milo-social.png)\n\n<img src="/images/milo-social.png" width="1200" height="630" alt="Sized image">\n\n<img src="https://example.com/remote.png" loading="eager" decoding="sync" width="600" height="400" alt="Remote">\n\n## Final chapter\n\n'+('Final paragraph. 最后的段落。\n\n'.repeat(12));
-    for(let i=1;i<=5;i++)await fs.writeFile(path.join(base,`source/_posts/post-${i}.md`),`---\ntitle: Post ${i}\ndate: ${i===5?'2025-02-01':'2026-01-0'+i} 12:00:00\ncategories: [Notes]\ntags: [Test]\ntoc: ${i!==5}\nlightbox: ${i!==2}\ncover: ${i===1?'/images/cover.png':i===2?'https://cdn.example.com/cover.jpg':(i===3 || i===4)?'/images/cover.png':''}\n---\n![Hero](/images/portrait.svg)\n\nSummary & **intro**\n<!-- more -->\nPrivate body${readingContent}`);
+    const readingContent='\n\n## Reading chapter\n\n'+('A paragraph with **emphasis**, [a link](https://example.com) and `inline code`. 阅读体验测试。\n\n'.repeat(12))+'### Code example\n\n```js\nconst message = "Hello <Milo>";\nconsole.log(message);\n```\n\n#### Image examples\n\n![Preview](/images/milo-social.png)\n\n<img src="/images/milo-social.png" width="1200" height="630" class="milo-screenshot" alt="Sized image">\n\n<img src="https://example.com/remote.png" loading="eager" decoding="sync" width="600" height="400" alt="Remote">\n\n## Final chapter\n\n'+('Final paragraph. 最后的段落。\n\n'.repeat(12));
+    for(let i=1;i<=5;i++)await fs.writeFile(path.join(base,`source/_posts/post-${i}.md`),`---\ntitle: Post ${i}\ndate: ${i===5?'2025-02-01':'2026-01-0'+i} 12:00:00\ncategories: [Notes]\ntags: [Test]\ntoc: ${i!==5}\nlightbox: ${i!==2}\ncover_fit: ${i===3?'contain':i===4?'invalid':i===2?'cover':''}\n${i===3?'thumbnail':'cover'}: ${i===1?'/images/cover.png':i===2?'https://cdn.example.com/cover.jpg':(i===3 || i===4)?'/images/cover.png':''}\n---\n![Hero](/images/portrait.svg)\n\nSummary & **intro**\n<!-- more -->\nPrivate body${readingContent}`);
     for(const layout of ['tags','categories','about','search','plain']){
       await fs.mkdir(path.join(base,'source',layout),{recursive:true});
       await fs.writeFile(path.join(base,'source',layout,'index.md'),`---\ntitle: ${layout}\nlayout: ${layout}\n---\nHello`);
@@ -140,6 +140,12 @@ test('Hexo builds: canonical, Disqus, pagination totals and navigation',async()=
         const secondHome=new JSDOM(await html('page/2/index.html')).window.document;
         assert.equal(secondHome.querySelector('.cover img').getAttribute('loading'),'eager');
         assert.equal(secondHome.querySelectorAll('.cover img')[1].getAttribute('loading'),'lazy');
+        const covers=[...home.querySelectorAll('.cover')];
+        assert.equal(covers[0].classList.contains('cover-contain'),false);
+        assert.equal(covers[1].classList.contains('cover-contain'),true);
+        assert.equal(covers[0].querySelector('img').getAttribute('src'),root+'images/cover.png');
+        assert.equal(new JSDOM(await html('page/3/index.html')).window.document.querySelectorAll('.cover').length,0); // Body-only image is not a cover.
+        assert.equal(doc.querySelectorAll('#post-content img.milo-screenshot').length,1);
         const imageContext={config:hexo.config,page:{path:'plain/index.html'},full_url_for:hexo.extend.helper.get('full_url_for').bind(hexo),url_for:hexo.extend.helper.get('url_for').bind(hexo)};
         const imageHTML=content=>new JSDOM(readingHTML.call(imageContext,content)).window.document.querySelector('img');
         assert.equal(imageHTML('<img src="/images/portrait.svg" width="100">').height,300);

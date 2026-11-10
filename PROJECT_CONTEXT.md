@@ -2,7 +2,7 @@
 
 ## 项目定位
 
-Milo 是独立的 Hexo 主题，当前版本为 v0.2.0（本地待发布），追求现代极简设计、优秀视觉体验、快速加载和长期可维护性。
+Milo 是独立的 Hexo 主题，当前基准版本为已发布的 v0.2.0，追求现代极简设计、优秀视觉体验、快速加载和长期可维护性。
 
 ## 技术架构
 
@@ -171,6 +171,18 @@ Milo 是独立的 Hexo 主题，当前版本为 v0.2.0（本地待发布），�
 - 本次 npm run check、全部 10 组回归通过，包含根目录及 /demo/ 实际构建；独立预览构建及 verify 通过，服务保持运行。npm pack --dry-run 审核 32 个发布文件，约 27 KiB，不含测试、开发上下文、node_modules 或生成物。浏览器功能验证沿用此前各轮已完成的 Chrome/Edge 结果，本次版本整理未修改功能或视觉。
 - README 明确已验证 Node.js 26.13.0 / Hexo 8.1.2；主题最低声明 Node.js 18 与 Hexo 8 自身要求 >=20.19 不混淆，未声称验证 Hexo 7 或 Node.js 18。Safari、Firefox、真实手机仍未实测。
 - 仅完成本地提交与发布准备；不创建 Git Tag、GitHub Release，不推送远程。
+
+## v0.2.0 图片展示优化
+
+2026-11-10，新增文章 Front Matter `cover_fit: contain`：模板仅对精确匹配的 contain 输出专用类，其余配置均使用默认 cover。保留显式 cover 优先、thumbnail 回退，不提取正文首图；未修改 SEO/Feed 图片机制。
+
+- contain 使用原有 5:3 封面占位和 object-fit 等比完整展示，允许留白；仅截图模式添加细边界、圆角和轻微阴影，使用现有 panel/line 变量适配深浅色。封面 align-self:flex-start 防止截图框被摘要高度拉长。
+- 正文通过 img.milo-screenshot 按需启用同类边界，采用内缩 outline 保持图片尺寸，不修改图片文件或增加运行时脚本/依赖。README 补充封面与正文区别、配置及真实尺寸示例。
+- 回归测试覆盖 contain、默认/非法值、thumbnail、正文 class、正文首图不作封面及 /demo/ 路径；浏览器测试增加横向/竖向/方形图片、失败占位、切换边界前后尺寸一致及无横向溢出断言。
+
+验证：npm run check、全部 10 组 npm test 回归通过（包括根目录及 /demo/ 实际 Hexo 构建）；测试复用独立预览的已安装依赖，通过 NODE_PATH 指定，未声称验证全新安装。npm run test:browser 完整 Chrome 套件通过 1280/390/360/320px、深浅色共 8 组组合；额外图片专项矩阵通过 1280/390/360px、深浅色 6 组，检查桌面浅色和手机深色截图。git diff --check 通过。Safari、Firefox、真实手机仍未实测，未知尺寸远程正文图片的原有布局位移限制不变。
+
+收尾状态：图片展示优化已通过用户阶段验收，整理为独立本地 Conventional Commit（feat: improve cover image display and screenshot styling），仅包含图片功能、回归测试及相关文档。此前已有的 layout/layout.ejs 与 scripts/milo.js 页脚版本信息修改保留为未提交状态，不纳入本轮提交。以已发布的 v0.2.0 为基准，不修改版本号、既有 Tag 或发布记录；不推送、不创建 Tag、不发布 Release、不部署网站。等待下一项开发任务。
 
 ## 后续计划（尚未完成）
 
