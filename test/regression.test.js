@@ -153,6 +153,14 @@ test('Hexo builds: canonical, Disqus, pagination totals and navigation',async()=
         assert.equal(secondHome.querySelector('.cover img').getAttribute('loading'),'eager');
         assert.equal(secondHome.querySelectorAll('.cover img')[1].getAttribute('loading'),'lazy');
         const covers=[...home.querySelectorAll('.cover')];
+        for(const entry of [...home.querySelectorAll('.entry'),...secondHome.querySelectorAll('.entry')]){
+          const copy=entry.querySelector('.entry-copy'),cover=entry.querySelector('.cover');
+          assert.equal(copy.classList.contains('has-cover'),!!cover);
+          assert.equal(copy.querySelectorAll('img').length,cover?1:0);
+          assert.deepEqual([...copy.children].map(el=>el.classList.contains('meta')?'meta':el.classList.contains('cover')?'cover':el.tagName.toLowerCase()),cover?['meta','h2','cover','p']:['meta','h2','p']);
+          assert.equal(copy.querySelector('h2 a').tabIndex,0);
+          if(cover){assert.equal(cover.tabIndex,-1);assert.equal(cover.getAttribute('aria-hidden'),'true');assert.equal(cover.querySelector('img').alt,'')}
+        }
         assert.equal(covers[0].classList.contains('cover-contain'),false);
         assert.equal(covers[1].classList.contains('cover-contain'),true);
         assert.equal(covers[0].querySelector('img').getAttribute('src'),root+'images/cover.png');

@@ -34,7 +34,7 @@ An independent Hexo theme built with EJS, native CSS and JavaScript. No frontend
 
 首页仅使用文章 Front Matter 的 `cover`，未设置时使用 `thumbnail`；不会自动提取正文首图。正文 Markdown/HTML 图片只显示在正文中，设置封面也不会自动插入正文。
 
-`cover_fit` 仅接受 `cover`（默认，摄影图片填满 5:3 区域，可能裁剪）和 `contain`（截图完整等比显示，允许留白）。缺省或其他值均回退 `cover`。两种模式保留相同的封面占位比例；contain 自动添加克制的边界、圆角和轻微阴影，适配深浅色。
+`cover_fit` 仅接受 `cover`（默认，摄影图片填满封面区域，可能裁剪）和 `contain`（截图完整等比显示，允许留白）。缺省或其他值均回退 `cover`。桌面保留 5:3 封面区域；800px 及以下按元信息、全宽标题、封面、摘要单栏排列，封面区域优先采用 16:9，并限制最大高度为 240px。两种模式使用相同占位尺寸；contain 自动添加克制的边界、圆角和轻微阴影，适配深浅色。
 
 ```yaml
 ---

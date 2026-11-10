@@ -38,3 +38,9 @@
 
 /* Center desktop covers; keep mobile thumbnails beside the title. */
 @media(min-width:801px){.cover{align-self:center}}
+
+/* One DOM order: metadata, title, cover, excerpt. Preserve desktop columns. */
+.entry-copy.has-cover{display:grid;grid-template-columns:minmax(0,1fr) 32%;grid-template-rows:min-content min-content 1fr;column-gap:24px}
+.entry-copy.has-cover>:not(.cover){grid-column:1}
+.entry-copy.has-cover>.cover{grid-column:2;grid-row:1/4;width:100%}
+@media(max-width:800px){.entry-copy.has-cover{display:block}.entry .cover{display:block;width:100%;margin-bottom:14px}.entry .cover img{aspect-ratio:16/9;max-height:240px}}
