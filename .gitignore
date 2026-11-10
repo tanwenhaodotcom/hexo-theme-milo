@@ -5,3 +5,14 @@ Thumbs.db
 /public/
 
 /db.json
+
+# 本地凭据与开发产物
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.log
+*.tgz
+/coverage/
+/screenshots/

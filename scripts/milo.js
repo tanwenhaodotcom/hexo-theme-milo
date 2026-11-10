@@ -29,7 +29,7 @@ hexo.extend.helper.register('milo_seo',function(){
   const suffix=page.current>1?'第 '+page.current+' 页':'';
   const title=[seoText(label),suffix,seoText(config.title)].filter(Boolean).join(' | ');
   const image=page.cover || page.thumbnail || theme.seo?.image || theme.img.avatar || 'images/milo-social.png';
-  // Resolve local images through url_for first: it accounts for root and avoids a doubled subdirectory.
+  // 本地图片先经过 url_for，适配 root 并避免重复子路径。
   const imageURL=new URL(this.url_for(image,{relative:false}),config.url.replace(/\/?$/,'/')).href;
   return {title,description:seoText(description).slice(0,160),url:this.full_url_for(page.path.replace(/index\.html$/,'')),image:imageURL,type:article?'article':'website'};
 });
@@ -53,7 +53,7 @@ hexo.extend.generator.register('milo-feed',function(locals){
     }).join('')+'</feed>'};
 });
 
-// Image metadata is read only from local source assets, never from the network.
+// 图片元数据只读取本地资源，不访问网络。
 const fs=require('node:fs'),path=require('node:path'),{imageSize}=require('image-size');
 const imageCache=new Map();
 function localImageSize(src,context){
@@ -80,7 +80,7 @@ function localImageSize(src,context){
     }
   }catch(e){}
 }
-// Enhance article output only: SEO, excerpts and feeds keep their original content.
+// 只增强文章输出，SEO、摘要和订阅保留原始内容。
 hexo.extend.helper.register('milo_reading_content',function(content){
   let firstImage=true;
   return String(content || '').replace(/<!--[\s\S]*?-->|<(pre|script|style)\b[^>]*>[\s\S]*?<\/\1\s*>|<img\b(?:[^>"']|"[^"]*"|'[^']*')*>/gi,(tag,block,offset)=>{
@@ -105,7 +105,7 @@ hexo.extend.helper.register('milo_reading_content',function(content){
 });
 
 hexo.extend.generator.register('milo-404',function(locals){
-  // A site-provided 404 page takes precedence over the theme fallback.
+  // 站点自备的 404 页面优先于主题默认页面。
   if(fs.existsSync(path.join(hexo.source_dir,'404.html')) || locals.pages.toArray().some(page=>page.path==='404.html'))return [];
   return {path:'404.html',layout:['404'],data:{layout:'404',title:'页面未找到',description:'这个页面可能已被移走，或地址有一点小偏差。'}};
 });

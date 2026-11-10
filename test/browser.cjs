@@ -1,5 +1,5 @@
 'use strict';
-// Optional real-browser regression suite; use the already-running preview site.
+// 可选真实浏览器回归套件，依赖运行中的专用预览夹具。
 const fs=require('node:fs/promises'),path=require('node:path'),os=require('node:os'),cp=require('node:child_process'),assert=require('node:assert/strict');
 const site=new URL(process.env.MILO_PREVIEW_URL || 'http://localhost:4000/');
 const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
@@ -62,8 +62,7 @@ async function until(check,label){const started=Date.now();for(let i=0;i<100;i++
         const longHeading=await evaluate(`(()=>{const nav=document.querySelector('.mobile-toc nav'),a=nav.querySelector('a'),label=a.querySelector('.toc-text')||a,original=label.textContent;label.textContent='VeryLongHeadingWithoutSpaces'.repeat(12);const r={width:nav.clientWidth,scroll:nav.scrollWidth,height:a.getBoundingClientRect().height};label.textContent=original;nav.scrollTop=nav.scrollHeight;r.scrollTop=nav.scrollTop;nav.scrollTop=0;return r})()`);
         assert.ok(longHeading.scroll<=longHeading.width+1);assert.ok(longHeading.height>50);assert.ok(longHeading.scrollTop>0);
         for(const index of [0,1,2]){
-          // Return to the visible directory as a reader would, rather than clicking
-          // offscreen nodes while the browser is anchoring the previous heading.
+          // 先返回可见目录，避免浏览器仍在定位上个标题时点击屏幕外节点。
           await evaluate('scrollTo({top:0,behavior:"instant"})');
           await until(async()=>await evaluate('scrollY===0'),'return to directory');
           await evaluate(`(()=>{const toc=document.querySelector('.mobile-toc'),summary=toc.querySelector('summary');summary.focus({preventScroll:true});if(!toc.open)summary.click();toc.querySelector('nav').scrollTop=0})()`);
@@ -135,8 +134,7 @@ async function until(check,label){const started=Date.now();for(let i=0;i<100;i++
       }
       await check('兼容性','plain');
       await check('example','repeated');
-      // The original filter matches the entire query. A browser-only fixture tag
-      // lets the same article exercise alternating tokens without changing it.
+      // 原过滤器匹配完整查询；浏览器临时标签让同一文章测试不同词而不改源内容。
       const fixture=posts.map(p=>p===post?{...p,tags:[...p.tags,'exam ple']}:p);
       const injection=await send('Page.addScriptToEvaluateOnNewDocument',{source:`{const original=window.fetch;window.fetch=(url,...args)=>String(url).endsWith('/search.json')?Promise.resolve(new Response(${JSON.stringify(JSON.stringify(fixture))},{headers:{'Content-Type':'application/json'}})):original.call(window,url,...args)}`});
       try{await check('exam ple','alternating')}
@@ -153,8 +151,7 @@ async function until(check,label){const started=Date.now();for(let i=0;i<100;i++
         await evaluate('scrollTo({top:100,behavior:"instant"})');
         assert.ok(await evaluate(`Math.abs(document.querySelector('.sidebar-sticky').getBoundingClientRect().top-(${initial.top}-scrollY))<1`));
         await evaluate(`scrollTo({top:0,behavior:'instant'});document.querySelector('.sidebar-sticky').classList.add('is-sticky')`);
-        // Short archive/taxonomy pages still obey the same parent constraint;
-        // extend only this test DOM to exercise their sticky travel range.
+        // 短归档和分类页仍受父容器约束；仅扩展测试 DOM 验证吸附范围。
         if(route!=='')await evaluate(`(()=>{const main=document.querySelector('#main'),spacer=document.createElement('div');spacer.className='sidebar-test-main';spacer.style.height='1400px';main.append(spacer)})()`);
         const mainTop=await evaluate('document.querySelector("#main").getBoundingClientRect().top');
         await evaluate(`scrollTo({top:${initial.top-initial.offset+80},behavior:'instant'})`);
@@ -163,7 +160,7 @@ async function until(check,label){const started=Date.now();for(let i=0;i<100;i++
         if(route==='')await screenshot('milo-sidebar-stuck-'+width+'-'+mode);
         await evaluate('scrollTo({top:document.body.scrollHeight,behavior:"instant"})');
         assert.equal(await evaluate('document.querySelector(".sidebar-sticky").getBoundingClientRect().bottom<=document.querySelector(".columns").getBoundingClientRect().bottom+1'),true);
-        // Make room after the parent to prove the sticky element stops with it.
+        // 在父容器后留出空间，验证吸附随父容器结束。
         await evaluate(`(()=>{const spacer=document.createElement('div');spacer.className='sidebar-test-after';spacer.style.height='1000px';document.querySelector('.columns').after(spacer);const group=document.querySelector('.sidebar-sticky'),aside=document.querySelector('.sidebar'),bottom=aside.getBoundingClientRect().bottom+scrollY;scrollTo({top:bottom-group.getBoundingClientRect().height-${initial.offset}+120,behavior:'instant'})})()`);
         const edge=await evaluate(`({group:document.querySelector('.sidebar-sticky').getBoundingClientRect().bottom,parent:document.querySelector('.sidebar').getBoundingClientRect().bottom,top:document.querySelector('.sidebar-sticky').getBoundingClientRect().top})`);
         assert.ok(Math.abs(edge.group-edge.parent)<1,'Sticky must stop at parent end');assert.ok(edge.top<initial.offset-50);
@@ -208,7 +205,7 @@ async function until(check,label){const started=Date.now();for(let i=0;i<100;i++
       for(const item of actual)assert.ok(Math.abs(item.container-item.image)<1,'Actual cover stretched: '+JSON.stringify(item));
       const cases=await evaluate(`(async()=>{
         const main=document.querySelector('#main'),entry=main.querySelector('.entry').cloneNode(true);
-        // Keep the original scrollbar while varying only the article copy.
+        // 只改变文章内容，保留原滚动条。
         main.style.minHeight=main.getBoundingClientRect().height+'px';main.replaceChildren(entry);
         const copy=entry.querySelector('.entry-copy'),cover=entry.querySelector('.cover'),img=cover.querySelector('img');
         const measure=()=>{const r=cover.getBoundingClientRect(),i=img.getBoundingClientRect(),c=copy.getBoundingClientRect(),e=entry.getBoundingClientRect(),style=getComputedStyle(cover),row=getComputedStyle(entry);return {width:r.width,height:r.height,imageHeight:i.height,top:r.top,imageTop:i.top,copyTop:c.top,copyHeight:c.height,copyWidth:c.width,titleWidth:copy.querySelector('h2').getBoundingClientRect().width,titleBottom:copy.querySelector('h2').getBoundingClientRect().bottom,summaryTop:copy.querySelector('p').getBoundingClientRect().top,coverBottom:r.bottom,left:r.left,align:style.alignSelf,overflow:style.overflow,radii:[style.borderTopLeftRadius,style.borderTopRightRadius,style.borderBottomLeftRadius,style.borderBottomRightRadius],fit:getComputedStyle(img).objectFit,rowHeight:e.height,expectedHeight:Math.max(c.height,r.height)+parseFloat(row.paddingBottom)+parseFloat(row.borderBottomWidth),gap:row.gap,padding:row.paddingBottom,margin:row.marginBottom}};
@@ -242,7 +239,7 @@ async function until(check,label){const started=Date.now();for(let i=0;i<100;i++
       const tree=await send('Accessibility.getFullAXTree');
       assert.ok(tree.nodes.some(n=>!n.ignored && n.role?.value==='heading' && n.name?.value===heading.text && n.properties?.some(p=>p.name==='level' && p.value.value===1)),'Accessible level-one heading');
     }
-    // Set MILO_ENTITY_FIXTURE_DIR for npm test and this command to reuse real Hexo output.
+    // npm test 与本命令使用相同 MILO_ENTITY_FIXTURE_DIR，可复用真实构建产物。
     async function checkSummaryEntities(){
       if(!process.env.MILO_ENTITY_FIXTURE_DIR)return;
       const expected=JSON.parse(await fs.readFile(path.join(process.env.MILO_ENTITY_FIXTURE_DIR,'expected.json'),'utf8'));
@@ -300,7 +297,7 @@ async function until(check,label){const started=Date.now();for(let i=0;i<100;i++
       await send('Emulation.setDeviceMetricsOverride',{width,height:844,deviceScaleFactor:1,mobile:width<600});
       await navigate('');
       const home=await evaluate(`(()=>{const nav=document.querySelector('.topbar').getBoundingClientRect(),heading=document.querySelector('.entry').getBoundingClientRect(),entries=[...document.querySelectorAll('.entry')];return {y:scrollY,width:innerWidth,clientWidth:document.documentElement.clientWidth,headingTop:heading.top,navBottom:nav.bottom,count:entries.length,rows:entries.map(e=>{const r=e.getBoundingClientRect(),copy=e.querySelector('.entry-copy');return {top:r.top,bottom:r.bottom,width:copy.clientWidth,scroll:copy.scrollWidth}})}})()`);
-      // innerWidth itself can expand with mobile overflow: compare to device width.
+      // 手机溢出可能同时撑大 innerWidth，应与设备宽度比较。
       assert.equal(home.width,width,'Expanded layout viewport');
       assert.ok(home.clientWidth<=width);assert.equal(home.y,0);assert.equal(home.count,6);
       assert.ok(home.headingTop>=home.navBottom);
@@ -340,7 +337,7 @@ async function until(check,label){const started=Date.now();for(let i=0;i<100;i++
         await screenshot('milo-404-after-'+width+'-'+mode);
         const searchReady=loaded();await evaluate('document.querySelector(".not-found-secondary").click()');await searchReady;
         assert.equal(await evaluate('!!document.querySelector(".search-form")'),true);
-        // Ordinary-page search still submits natively and carries the keyword.
+        // 普通页搜索仍使用原生表单提交并携带关键词。
         await navigate('');if(width<801)await evaluate('document.querySelector(".mobile-search").click()');
         const submitted=loaded();await evaluate('document.querySelector(".nav-search input").value="代码";document.querySelector(".nav-search").requestSubmit()');await submitted;
         await until(async()=>await evaluate('document.querySelector("#search-q")?.value==="代码" && document.querySelectorAll(".search-result").length>0'),'search results');

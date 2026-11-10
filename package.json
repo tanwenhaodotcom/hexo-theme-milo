@@ -1,7 +1,7 @@
 {
   "name": "hexo-theme-milo",
   "version": "0.3.0",
-  "description": "A calm, responsive Hexo theme with native search and reading navigation",
+  "description": "基于 Hexo 的轻量级响应式博客主题，支持深浅色模式、文章搜索与阅读导航",
   "license": "MIT",
   "keywords": [
     "hexo",
@@ -26,7 +26,10 @@
     "_config.yml.example",
     "README.md",
     "LICENSE",
-    "CHANGELOG.md"
+    "CHANGELOG.md",
+    "CONTRIBUTING.md",
+    "VERIFICATION.md",
+    "PRIVACY_REVIEW.md"
   ],
   "repository": {
     "type": "git",

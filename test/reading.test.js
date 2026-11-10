@@ -29,7 +29,7 @@ test('reading progress, chapter highlight, mobile anchor focus and no-TOC fallba
   assert.equal(d.querySelector('progress').value,0);
   assert.equal(d.querySelector('.reading-progress').hidden,false);
   scroll(-552);assert.equal(d.querySelector('progress').value,50);
-  // Native anchor scrolling can stop at a fractional pixel past scroll-margin.
+  // 原生锚点滚动可能在 scroll-margin 附近产生不足一像素的偏差。
   scroll(-1703.5);assert.equal(d.querySelector('a[href="#end"]').getAttribute('aria-current'),'location');
   scroll(-2100);assert.equal(d.querySelector('progress').value,100);
   assert.equal(d.querySelector('a[href="#end"]').getAttribute('aria-current'),'location');

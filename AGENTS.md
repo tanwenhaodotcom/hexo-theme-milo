@@ -1,80 +1,18 @@
+# Milo 项目规范
 
+Milo 是轻量级 Hexo 主题，使用 Hexo、EJS、原生 CSS 和 JavaScript，不使用前端框架。
 
-\# Milo Project Instructions
+## 执行规则
 
+- 每次新任务先读取根目录 AGENTS.md；涉及背景、技术决策和进度时再读取 PROJECT_CONTEXT.md。
+- 只读取任务相关文件，避免重复分析和无关重构。
+- 保留既有架构、视觉设计、功能和向后兼容性。
+- 优先在 Hexo 构建期处理内容，保持 CSS 和 JavaScript 轻量，不增加不必要依赖。
+- 多项修改尽可能合并验证；运行相关语法、回归、构建及必要的浏览器测试，不省略必要验证。
+- 文档以简体中文为主，命令、配置键、路径和专有名称保留原文。
+- 示例使用中性虚构内容，不记录私人文章、个人路径、凭据或完整对话；保留许可证及必要归属。
+- 不修改独立博客项目。未经明确授权，不提交、推送、创建标签、发布、部署或修改 GitHub 设置，不重写历史。
 
+## 汇报
 
-\## Project
-
-Milo is a lightweight Hexo theme.
-
-
-
-Tech stack:
-
-\- Hexo + EJS
-
-\- Native CSS
-
-\- Native JavaScript
-
-\- No frontend frameworks
-
-
-
-\## Development Rules
-
-
-
-1\. Prioritize token efficiency. Avoid unnecessary repository exploration.
-
-2\. Read only files relevant to the current task.
-
-3\. Do not repeat previously completed analysis.
-
-4\. Preserve the existing architecture and visual design.
-
-5\. Avoid unnecessary dependencies and frameworks.
-
-6\. Do not perform unrelated refactoring.
-
-7\. Prefer Hexo build-time processing over browser-side processing.
-
-8\. Keep CSS and JavaScript lightweight.
-
-9\. Preserve existing functionality and backward compatibility.
-
-10\. Run relevant tests after modifications.
-
-
-
-\## Reporting
-
-
-
-Keep final reports concise:
-
-\- Modified files
-
-\- Changes made
-
-\- Test results
-
-\- Remaining issues
-
-
-
-Do not output entire source files unless requested.
-
-
-
-
-## Task Context and Execution
-
-- 每次新任务先读取根目录 AGENTS.md。
-- 涉及项目背景、历史决策和开发进度时，再读取 PROJECT_CONTEXT.md。
-- 只读取当前任务相关的源码文件，避免重复分析、重复读取和无关重构。
-- 多项修改尽可能合并执行测试。
-- 终端输出只保留必要信息。
-- 最终报告简洁，不输出完整源码。
-- 不要为了节省 Token 而省略必要的测试和验证。
+简要列出修改文件、主要变化、测试结果和剩余问题。终端仅输出必要信息，不输出整个源码文件。

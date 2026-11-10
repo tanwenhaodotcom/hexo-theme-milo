@@ -212,7 +212,7 @@ test('Hexo builds: canonical, Disqus, pagination totals and navigation',async()=
       assert.equal(doc.querySelector('.sidebar-sticky.is-sticky'),null);
       assert.equal(doc.querySelectorAll('.sidebar-sticky>.side-section').length,2);
     }finally{await disabled.exit();await fs.writeFile(path.join(base,'_config.milo.yml'),normalThemeConfig);}
-    // Verify native global per_page=6 with enough posts to retain a second page.
+    // 使用足够文章验证原生 per_page=6 及第二页。
     for(const i of [6,7])await fs.writeFile(path.join(base,`source/_posts/post-${i}.md`),`---\ntitle: Post ${i}\ndate: 2026-02-0${i} 12:00:00\n---\nSix-per-page regression.`);
     const originalConfig=await fs.readFile(path.join(base,'_config.yml'),'utf8');
     for(const root of ['/','/demo/']){
@@ -220,7 +220,7 @@ test('Hexo builds: canonical, Disqus, pagination totals and navigation',async()=
       await fs.writeFile(path.join(base,'_config.yml'),config);
       const output=path.resolve(base,'public');
       assert.equal(path.dirname(output),path.resolve(base));
-      // Start from fresh generated output; old pagination files can otherwise survive.
+      // 从空输出目录构建，避免残留旧分页文件。
       await fs.rm(output,{recursive:true,force:true});
       const hexo=new Hexo(base,{silent:true});
       try{
@@ -279,8 +279,8 @@ test('appearance keyboard navigation and focus lifecycle',async()=>{
 
 test('Homepage summaries decode entities once and keep EJS HTML escaping',async()=>{
   const base=await fs.mkdtemp(path.join(os.tmpdir(),'milo-entities-'));
-  const encoded='github.com&#x2F;tanwenhaodotcom&#x2F;hexo-theme-milo &amp; &quot;quoted&quot; &#39;single&#39; &lt;img src=x onerror=window.__miloXSS=1&gt; &lt;script&gt;window.__miloXSS=1&lt;/script&gt; &amp;lt;b&amp;gt;';
-  const expected='github.com/tanwenhaodotcom/hexo-theme-milo & "quoted" \'single\' <img src=x onerror=window.__miloXSS=1> <script>window.__miloXSS=1</script> &lt;b&gt;';
+  const encoded='example.com&#x2F;project&#x2F;milo &amp; &quot;quoted&quot; &#39;single&#39; &lt;img src=x onerror=window.__miloXSS=1&gt; &lt;script&gt;window.__miloXSS=1&lt;/script&gt; &amp;lt;b&amp;gt;';
+  const expected='example.com/project/milo & "quoted" \'single\' <img src=x onerror=window.__miloXSS=1> <script>window.__miloXSS=1</script> &lt;b&gt;';
   try{
     await fs.mkdir(path.join(base,'themes'),{recursive:true});
     for(const entry of ['layout','source','_config.yml'])await fs.cp(path.join(theme,entry),path.join(base,'themes/milo',entry),{recursive:true});

@@ -1,4 +1,4 @@
-# Milo theme configuration
+# Milo 主题默认配置
 uiux:
   slogan: ''
   primary_color: null
@@ -20,18 +20,18 @@ comment:
   disqus:
     shortname: ''
 
-# Social image: absolute URL or site-local path; falls back to avatar, then bundled PNG.
+# 分享图：完整 URL 或站内路径，回退到头像及内置 PNG。
 seo:
   image: ''
-# Built-in Atom feed; existing site feed generator takes precedence.
+# 内置 Atom 订阅；站点已有 Feed 生成器优先。
 feed:
   enable: true
   limit: 20
 
-# Optional native image lightbox on article pages; front matter lightbox: false opts out.
+# 可选文章灯箱；文章可用 lightbox: false 单独禁用。
 reading:
   lightbox: false
 
-# Keep recent posts and categories sticky in the two-column layout.
+# 双栏布局吸附最近文章与分类区域。
 sidebar:
   sticky: true

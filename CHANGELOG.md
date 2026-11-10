@@ -1,62 +1,62 @@
-# Changelog
+# 更新记录
 
-## 0.3.0 — 2026-11-10 (Pre-release)
+## 0.3.0 — 2026-11-10 （预发布）
 
-### Added
+### 新增
 
-- Opt-in article `cover_fit: contain` and `milo-screenshot` framing using theme colors; explicit cover/thumbnail selection remains unchanged.
-- Hexo and Milo versions in the footer, generated at build time.
+- 文章新增可选 cover_fit: contain 和 milo-screenshot 截图边界，保留显式封面选择。
+- 页脚在构建期生成 Hexo 和 Milo 版本信息。
 
-### Fixed
+### 修复
 
-- Homepage excerpt HTML entities decode once before safe EJS escaping.
-- Covers keep their rounded corners and intrinsic frame height instead of stretching with long excerpts.
-- Navigation resize observation includes its border box, keeping mobile progress aligned when safe-area padding changes.
+- 首页摘要 HTML 实体仅解码一次，再进行 EJS 安全转义。
+- 封面保留圆角及自身高度，不再随长摘要拉伸。
+- 导航尺寸观察包含边框盒，安全区域变化后手机进度条保持对齐。
 
-### Changed
+### 调整
 
-- Homepage removes its visible heading but retains a meaningful, accessible hidden H1 with pagination context.
-- Desktop covers align vertically with the article copy; mobile homepages use metadata, full-width title, one cover and excerpt in source order.
-- Mobile covers use a 16:9 frame capped at 240px; contain images remain fully visible. Desktop proportions remain 5:3.
-- At 800px and below, reading progress is a 3px line immediately below the measured sticky navigation; desktop progress and calculation remain unchanged.
-- Expanded regression coverage for DOM order, accessibility, fit modes, real navigation height, safe areas, progress states and breakpoint boundaries.
+- 首页移除可见标题，保留含分页信息的可访问隐藏 H1。
+- 桌面封面与正文垂直居中，手机按元信息、全宽标题、单张封面和摘要排列。
+- 手机封面采用 16:9 区域、最高 240px，contain 完整展示；桌面保持 5:3。
+- 800px 及以下阅读进度为实际导航下缘的 3px 细条，桌面及进度算法不变。
+- 扩展 DOM 顺序、可访问性、封面模式、导航高度、安全区域、进度状态和断点回归。
 
-### Validation and limits
+### 验证与限制
 
-- Node.js 26.13.0 / Hexo 8.1.2: syntax checks, 12 regression groups, root and /demo/ builds, and Chrome 156 full checks at 320/360/390/480/800/801/1280px in light/dark mode passed.
-- Edge 157 startup timed out in this run; its page checks were not completed. Safari, Firefox and physical phones remain untested.
-- Earlier intermittent TOC/return-to-top and scroll-restoration timeouts remain under observation; assertions were not loosened. This Chrome full matrix passed with diagnostic timeout reporting.
+- Node.js 26.13.0 / Hexo 8.1.2：语法、12 组回归、根目录及 /demo/ 构建、Chrome 156 七种屏宽深浅色检查通过。
+- Edge 157 本轮启动超时，未完成页面检查；Safari、Firefox 和真实手机未测。
+- 此前目录跳转、返回顶部和滚动恢复偶发超时继续观察，未放宽断言；本轮 Chrome 完整矩阵通过。
 
 ## 0.2.0
 
-### Added
+### 新增
 
-- Page-specific SEO metadata, Open Graph and Twitter Cards, with absolute sharing-image URLs and a bundled default image.
-- Dependency-free Atom feed generation and feed discovery, respecting an existing site feed generator.
-- Generated 404 page with home/search links, responsive layout and light/dark appearance.
-- Collapsible mobile table of contents, reading progress, code-copy controls and optional native image lightbox.
-- Safe title/excerpt keyword highlighting for Chinese, English and literal special characters.
-- Configurable CSS sticky sidebar for recent posts and categories, leaving the author card in normal flow.
-- Automated Hexo root/subdirectory builds, browser regression checks and dependency lockfile.
+- 新增页面 SEO、Open Graph、Twitter Card、绝对分享图 URL 和默认图片。
+- 新增无需额外依赖的 Atom 生成及自动发现，兼容站点已有 Feed 生成器。
+- 生成含首页和搜索链接的响应式 404 页面，支持深浅色。
+- 新增手机折叠目录、阅读进度、代码复制及可选原生图片灯箱。
+- 标题和摘要安全高亮中文、英文及字面特殊字符。
+- 最近文章和分类支持 CSS 粘性侧栏，作者卡片保持正常文档流。
+- 增加根目录和子路径自动构建、浏览器回归及依赖锁文件。
 
-### Fixed
+### 修复
 
-- Canonical/Disqus URL handling and full article counts on paginated archive/taxonomy pages.
-- Missing tag/about navigation and appearance-menu keyboard/focus behavior.
-- Duplicate search controls and unbroken-text overflow in home/search excerpts.
-- Mobile table-of-contents wrapping and active-heading rounding; native clipboard fallback and lightbox focus containment.
-- Image layout reservation, first-image loading priority and conditional reading-script loading.
-- Explicit build-time dependencies on hexo-util and image-size.
+- 修复 Canonical/Disqus URL 和分页归档、分类、标签总数。
+- 补齐标签与关于导航，修复外观菜单键盘和焦点行为。
+- 修复重复搜索控件及首页、搜索摘要连续长词溢出。
+- 修复手机目录换行和高亮舍入误差，补充复制回退及灯箱焦点约束。
+- 改进图片尺寸占位、首图加载优先级和阅读脚本按需加载。
+- 显式声明 hexo-util、image-size 构建期依赖。
 
-### Changed
+### 调整
 
-- Refined reading typography; mobile progress uses a safe-area-aware 3px bottom bar while desktop progress remains unchanged.
-- Documented native pagination, unpaginated archive configuration and independent local preview workflow.
-- Validated on Node.js 26.13.0 / Hexo 8.1.2; other runtime/browser combinations remain outside this validation.
+- 调整阅读排版；本版本手机进度为避开安全区域的底部 3px 细条，桌面不变。
+- 说明原生分页、归档不分页配置及独立本地预览。
+- 已验证 Node.js 26.13.0 / Hexo 8.1.2，其他环境不在本轮验证范围内。
 
 ## 0.1.0
 
-- Initial independent Hexo theme, authored from scratch.
-- Responsive layouts, system-aware appearance, local search and tracked table of contents.
-- Standard Hexo archive, taxonomy and pagination support.
-- Comments load only on reader request.
+- 首个独立 Hexo 主题版本。
+- 响应式布局、系统外观、本地搜索和章节目录跟踪。
+- 支持标准 Hexo 归档、分类、标签及分页。
+- 仅在读者主动请求后加载评论。

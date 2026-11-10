@@ -2,7 +2,7 @@
 
 当前版本：**0.3.0**（Pre-release）。
 
-An independent Hexo theme built with EJS, native CSS and JavaScript. No frontend framework or browser runtime dependencies; small utilities run at build time.
+Milo 是使用 EJS、原生 CSS 和 JavaScript 构建的独立 Hexo 博客主题。没有前端框架和浏览器运行时依赖，文本和图片工具仅在构建期运行。
 
 ## 功能
 
@@ -13,20 +13,48 @@ An independent Hexo theme built with EJS, native CSS and JavaScript. No frontend
 - 作者资料和字数统计，Disqus 按需加载
 - 原生系统字体、内联 SVG 图标，无外部字体或前端框架
 
-## 安装
+## 环境与安装
 
-已验证 Node.js 26.13.0 / Hexo 8.1.2。主题声明 Node.js >=18，但 Hexo 8.1.2 自身要求 Node.js >=20.19；实际环境须同时满足 Hexo 的要求。本轮未验证 Hexo 7 或 Node.js 18。站点需安装 hexo-renderer-ejs、hexo-renderer-marked、hexo-generator-index、hexo-generator-archive、hexo-generator-category、hexo-generator-tag。
+已验证 Node.js 26.13.0 / Hexo 8.1.2。主题声明 Node.js >=18，但 Hexo 8.1.2 要求 Node.js >=20.19；须同时满足所用 Hexo 和插件的要求。Hexo 7、Node.js 18 未验证。需先安装 Node.js、npm 和 Git。
 
-1. 在博客根目录执行：`git clone https://github.com/tanwenhaodotcom/hexo-theme-milo.git themes/milo`，然后执行 `npm install --prefix themes/milo --omit=dev` 安装主题的构建期依赖。
-2. 站点 _config.yml 设置 theme: milo。
-3. 从 _config.yml.example 复制必要选项到博客根目录 _config.milo.yml。
-4. 执行 hexo clean 和 hexo generate；hexo server 本地预览。
+新建站点时，在准备存放博客的父目录执行；已有 Hexo 站点可跳过：
+
+```sh
+npx --package hexo-cli hexo init milo-site
+cd milo-site
+npm install
+```
+
+在博客根目录安装主题及站点必需渲染器、生成器：
+
+```sh
+git clone https://github.com/tanwenhaodotcom/hexo-theme-milo.git themes/milo
+npm install --prefix themes/milo --omit=dev
+npm install hexo-renderer-ejs hexo-renderer-marked hexo-generator-index hexo-generator-archive hexo-generator-category hexo-generator-tag
+```
+
+将博客根目录 _config.yml 的 theme 改为 milo，按实际情况设置 title、author、url、root 和 language: zh-CN。主题界面主要为中文，尚未提供完整多语言翻译。
+
+复制 themes/milo/_config.yml.example 为博客根目录 _config.milo.yml，不要覆盖博客的 _config.yml。主题的 hexo-util、image-size 仅用于构建；Disqus 是可选服务，Atom 不需另装插件。本主题不包含部署工具。
+
+### 本地预览
+
+在博客根目录执行，hexo-server 为本地预览所需插件（新建站点通常已有）：
+
+```sh
+npm install hexo-server
+npx hexo clean
+npx hexo generate
+npx hexo server
+```
+
+访问终端显示的本地地址。子路径部署须正确设置 url/root；修改主题配置后重启服务。
 
 ## 配置与内容
 
 主题默认配置见 _config.yml。博客标题、作者、网址、语言、分页仍使用 Hexo 原生站点配置。主题没有打包个人文章、头像、域名、后台或部署凭据。
 
-静态页面请在 source 中创建 index.md，front matter 使用 layout: search、tags、categories 或 about。about/index.html 也会自动识别为关于页。
+将 themes/milo/examples/pages/ 中的四个页面示例分别复制到 source/search/index.md、source/tags/index.md、source/categories/index.md 和 source/about/index.md（先创建目录）。保留对应 layout，关于页正文自行填写；about/index.html 也会识别为关于页。
 
 文章可使用 cover 或 thumbnail、toc: false、comments: false。目录由 Markdown 标题自动生成。总字数按中文字符和英文单词计算，不含 HTML 标记与标点。
 
@@ -58,13 +86,13 @@ search.enable 关闭时隐藏搜索入口且不生成 search.json。comment.disq
 
 ## 开发
 
-layout/ 存放 EJS 模板；scripts/milo.js 注册字数 helper 和搜索生成器；source/css/milo.css 为独立样式；source/js/milo.js 为浏览器交互。没有前端编译步骤；主题构建期依赖见 package.json。
+layout/ 存放 EJS 模板；scripts/milo.js 提供构建期 helper、SEO、搜索、Atom、图片尺寸和 404 处理；source/css/milo.css 为独立样式；source/js/milo.js 为浏览器交互。没有前端编译步骤；主题构建期依赖见 package.json。
 
 项目仓库：https://github.com/tanwenhaodotcom/hexo-theme-milo
 
-## License
+## 许可证
 
-MIT，见 LICENSE。
+采用 [MIT 许可证](LICENSE)，保留英文法律文本及版权声明。
 
 ## SEO 与订阅
 
@@ -94,7 +122,7 @@ MIT，见 LICENSE。
 
 搜索结果的标题和可见摘要会标记查询词，支持中文、英文、重复匹配及按空白分隔的多个高亮词。高亮只改变展示，不改变原有整串查询过滤、结果顺序或索引；正则特殊字符按字面处理，内容通过 DOM 文本节点和 mark 元素生成。
 
-保持独立预览运行后执行 npm run test:browser（Node.js 22+，已验证 Node.js 26），使用已安装的 Chrome/Edge 检查首页视口与滚动恢复、6+1 分页、404 和搜索。可用 MILO_BROWSER 指定浏览器、MILO_PREVIEW_URL 指定预览地址。设置 MILO_TEST_HMR=1 会临时追加并原样移除 CSS 注释，以验证热更新与滚动位置；MILO_SCREENSHOT_DIR 可指定截图目录。设置 MILO_TEST_IMAGES_ONLY=1 可单独检查截图封面、正文边界、多种图片比例与失败占位的桌面/360/390px 深浅色矩阵（浏览器内临时夹具，不修改文章）。该浏览器测试不安装新依赖，也不会将浏览器滚动强制归零。
+开发依赖、回归命令和浏览器夹具要求见 [验证说明](VERIFICATION.md)。普通用户无需安装 jsdom 或运行主题测试。
 
 ## 桌面粘性侧栏
 
@@ -110,3 +138,53 @@ sidebar:
 配置修改后重启 Hexo Server。侧栏宽度、作者卡片及模块间距保持不变，不使用 fixed、滚动监听或额外依赖。
 
 可在保持预览运行时设置 MILO_TEST_SIDEBAR_ONLY=1，再执行 npm run test:browser 单独复验侧栏；完整浏览器测试也包含该回归。测试覆盖桌面、双栏平板、手机、深浅色、父容器边界和关闭开关。
+
+## 配置速查
+
+在博客根目录 _config.milo.yml 覆盖所需值，完整默认值见 [_config.yml](_config.yml)。
+
+| 配置键 | 用途 |
+| --- | --- |
+| uiux.slogan | 作者卡片和关于页简介，可用字符串或数组 |
+| uiux.primary_color / link_color / bg_color | 按钮、链接和背景颜色 |
+| img.avatar / head.favicon.ico | 自备头像和图标路径，留空不显示 |
+| footer.custom_text / copyright_since | 受信任的页脚 HTML / 起始年份，0 使用当前年份 |
+| search.enable / toc.enable | 搜索 / 目录开关 |
+| comment.disqus.shortname | Disqus 站点标识，留空关闭 |
+| seo.image | 分享图片路径或 HTTP(S) URL |
+| feed.enable / limit | 内置 Atom 开关 / 正整数篇数 |
+| reading.lightbox | 图片灯箱，默认关闭 |
+| sidebar.sticky | 桌面侧栏吸附，默认开启 |
+
+标题、作者、域名使用 Hexo 站点配置；关于页正文可加入个人介绍和社交链接，主题没有专门的社交链接配置键。图片路径必须对应自行添加的资源，示例不附带头像或私人截图。
+
+## 更新与卸载
+
+更新前备份配置及主题内自行修改的文件。在博客根目录执行：
+
+```sh
+git -C themes/milo pull --ff-only
+npm install --prefix themes/milo --omit=dev
+npx hexo clean
+npx hexo generate
+```
+
+此方式跟随默认分支，可能包含未发布修改；需要固定版本时先阅读对应 Release，再选择标签。直接修改主题的用户须先处理自己的改动，不要强制覆盖。
+
+卸载时先将站点 theme 改为已安装的其他主题，再删除 themes/milo，按需移除 _config.milo.yml，然后 clean 和 generate。文章与站点依赖独立保留。
+
+## 常见问题
+
+- 无样式或子路径链接错误：检查站点 url/root，清理旧生成文件后重建。
+- 搜索、分类、标签或关于页缺失：按上述路径复制示例并检查 layout；关闭搜索不生成索引。
+- 头像或封面缺失：添加实际图片并检查路径；正文首图不会自动成为封面。
+- 配置未生效：区分站点配置与主题覆盖配置，重启 Hexo Server；更换分页策略后 clean。
+- 线上未使用 404：由托管平台配置未知路径及 HTTP 404 状态。
+
+## 开发方式与贡献说明
+
+Milo 是一个由项目维护者主导设计与需求，主要使用 OpenAI Codex 完成代码编写、调试、测试和构建的 Hexo 主题。项目维护者负责功能规划、设计决策、验收与版本发布，并承担项目维护责任。
+
+本项目不是 OpenAI 官方开发、认证或担保的产品，Codex 不独立运营或维护本项目。
+
+欢迎通过仓库 Issues 或 Pull Request 参与，详见 [贡献指南](CONTRIBUTING.md)。请勿在公开反馈中上传凭据或私人文章。
