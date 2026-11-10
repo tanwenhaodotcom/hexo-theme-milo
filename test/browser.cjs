@@ -225,8 +225,8 @@ async function until(check,label){const started=Date.now();for(let i=0;i<100;i++
       assert.ok(actual.length>0);assert.equal(cases.viewport,width);assert.ok(cases.overflow<=width);assert.equal(cases.noCover.count,0);assert.equal(cases.noCover.overflow,true);
       for(const {fit,variants} of cases.results){const first=variants[0];for(const item of variants){
         assert.equal(item.align,width>800?'center':'flex-start');assert.equal(item.fit,fit);assert.equal(item.overflow,'hidden');assert.ok(item.radii.every(r=>parseFloat(r)>0));
-        assert.ok(Math.abs(item.height-item.imageHeight)<1);assert.ok(Math.abs(item.top-item.imageTop)<1);if(width>800)assert.ok(Math.abs(item.width/item.height-5/3)<0.02);
-        else{assert.ok(Math.abs(item.height-Math.min(item.width*9/16,240))<1);assert.ok(Math.abs(item.width-item.copyWidth)<1);assert.ok(Math.abs(item.titleWidth-item.copyWidth)<1);assert.ok(item.top>=item.titleBottom+13);assert.ok(item.summaryTop>=item.coverBottom+13)}
+        assert.ok(Math.abs(item.height-item.imageHeight)<1);assert.ok(Math.abs(item.top-item.imageTop)<1);assert.ok(Math.abs(item.width/item.height-16/10)<0.02);
+        if(width<=800){assert.ok(Math.abs(item.width-item.copyWidth)<1);assert.ok(Math.abs(item.titleWidth-item.copyWidth)<1);assert.ok(item.top>=item.titleBottom+13);assert.ok(item.summaryTop>=item.coverBottom+13)}
         if(width>800)assert.ok(Math.abs(item.top-(item.copyTop+(item.copyHeight-item.height)/2))<1,'Desktop cover vertical alignment');
         for(const key of ['width','height','left','gap','padding','margin'])assert.equal(item[key],first[key],key+' varies with copy length');
         assert.ok(Math.abs(item.rowHeight-item.expectedHeight)<1,'Row should size naturally');
@@ -269,7 +269,7 @@ async function until(check,label){const started=Date.now();for(let i=0;i<100;i++
         cover.parentElement.classList.remove('cover-contain');
         return {before,results,failed,framed,plain,border,defaultFit:getComputedStyle(cover).objectFit,overflow:document.documentElement.scrollWidth,viewport:innerWidth,bodyWidth:framed[0],mainWidth:main.clientWidth};
       })()`);
-      assert.ok(result.before[0]>0);if(width>800)assert.ok(Math.abs(result.before[0]/result.before[1]-5/3)<0.02);else assert.ok(Math.abs(result.before[1]-Math.min(result.before[0]*9/16,240))<1);
+      assert.ok(result.before[0]>0);assert.ok(Math.abs(result.before[0]/result.before[1]-16/10)<0.02);
       for(const item of result.results){assert.equal(item.fit,'contain');assert.deepEqual(item.box,result.before);assert.ok(item.natural[0]>0)}
       assert.deepEqual(result.failed,result.before);assert.deepEqual(result.framed,result.plain);
       assert.equal(result.defaultFit,'cover');assert.equal(result.border,'1px');assert.equal(result.viewport,width);assert.ok(result.overflow<=width);assert.ok(result.bodyWidth<=result.mainWidth);
