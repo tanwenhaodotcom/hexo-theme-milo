@@ -2,7 +2,9 @@
 
 **一款简洁、轻量、注重阅读体验的 Hexo 博客主题。**
 
-[![版本](https://img.shields.io/badge/版本-v0.4.0--pre--release-informational)](https://github.com/tanwenhaodotcom/hexo-theme-milo/releases/tag/v0.4.0) · [下载与版本记录](https://github.com/tanwenhaodotcom/hexo-theme-milo/releases) · [反馈问题](https://github.com/tanwenhaodotcom/hexo-theme-milo/issues)
+**[Live Demo · 在线演示](https://demo.tanwenhao.com)**
+
+[![版本](https://img.shields.io/badge/版本-v0.4.0--pre--release-informational)](https://github.com/twhao/hexo-theme-milo/releases/tag/v0.4.0) · [下载与版本记录](https://github.com/twhao/hexo-theme-milo/releases) · [反馈问题](https://github.com/twhao/hexo-theme-milo/issues)
 
 ![Milo 主题首页预览，浅色模式](docs/images/milo-preview-light.png)
 
@@ -34,16 +36,16 @@ Milo 使用 **EJS、原生 CSS 与 JavaScript**，无前端框架。提供响应
 打开终端，先进入 **Hexo 博客根目录**（即包含站点 `_config.yml`、`source/`、`themes/` 的文件夹），然后执行：
 
 ```bash
-git clone https://github.com/tanwenhaodotcom/hexo-theme-milo.git themes/milo
+git clone https://github.com/twhao/hexo-theme-milo.git themes/milo
 npm install --prefix themes/milo --omit=dev
 npm install hexo-renderer-ejs hexo-renderer-marked hexo-generator-index hexo-generator-archive hexo-generator-category hexo-generator-tag
 ```
 
 第一行下载主题到 `themes/milo`；第二行安装 Milo 构建期所需依赖；第三行确保站点安装了 Milo 使用的渲染器及页面生成器。**这些命令均在博客根目录执行。**
 
-如果不使用 Git，也可到 [Releases](https://github.com/tanwenhaodotcom/hexo-theme-milo/releases) 下载主题压缩包，解压后将主题文件放进 `themes/milo/`，再执行上面的两条 `npm install` 命令。确保 `_config.yml`、`layout/`、`scripts/` 等文件就在 `themes/milo/` 下，而不是多嵌套了一层文件夹。
+如果不使用 Git，也可到 [Releases](https://github.com/twhao/hexo-theme-milo/releases) 下载主题压缩包，解压后将主题文件放进 `themes/milo/`，再执行上面的两条 `npm install` 命令。确保 `_config.yml`、`layout/`、`scripts/` 等文件就在 `themes/milo/` 下，而不是多嵌套了一层文件夹。
 
-> **版本提示：** `git clone` 默认取得仓库当前分支内容，可能包含尚未正式发布的改动。希望使用指定版本，可参照 [v0.4.0 预发布说明](https://github.com/tanwenhaodotcom/hexo-theme-milo/releases/tag/v0.4.0) 下载对应源代码。当前项目仍为 Pre-release。
+> **版本提示：** `git clone` 默认取得仓库当前分支内容，可能包含尚未正式发布的改动。希望使用指定版本，可参照 [v0.4.0 预发布说明](https://github.com/twhao/hexo-theme-milo/releases/tag/v0.4.0) 下载对应源代码。当前项目仍为 Pre-release。
 
 ### 2. 在 Hexo 中选择 Milo
 
@@ -346,7 +348,7 @@ npm run test:browser # 主题浏览器测试
 **更新前请备份**博客根目录的 `_config.milo.yml`，以及任何直接修改过的主题源文件。
 
 - **Git 安装、跟随默认分支：** 在博客根目录执行 `git -C themes/milo pull --ff-only`，然后执行 `npm install --prefix themes/milo --omit=dev`。如果主题处于标签（detached HEAD）或存在本地修改，请不要直接运行 `pull`。
-- **安装了指定 Release：** 到 [Releases](https://github.com/tanwenhaodotcom/hexo-theme-milo/releases) 获取希望升级到的版本，按版本说明更换主题文件，并重新安装主题依赖。不要将主分支自动更新误认为固定版本升级。
+- **安装了指定 Release：** 到 [Releases](https://github.com/twhao/hexo-theme-milo/releases) 获取希望升级到的版本，按版本说明更换主题文件，并重新安装主题依赖。不要将主分支自动更新误认为固定版本升级。
 - **卸载：** 先在博客站点 `_config.yml` 中切换到其他已安装主题，再删除 `themes/milo/`。`_config.milo.yml` 可自行保留或移除；博客文章不会因为卸载 Milo 而删除。
 
 ## 常见问题
@@ -389,9 +391,9 @@ Milo 可以生成 `404.html`，但是否返回 HTTP 404 以及如何展示，取
 
 ## 项目与许可证
 
-- [GitHub 项目仓库](https://github.com/tanwenhaodotcom/hexo-theme-milo)
-- [版本发布与下载](https://github.com/tanwenhaodotcom/hexo-theme-milo/releases)
-- [提交问题与建议](https://github.com/tanwenhaodotcom/hexo-theme-milo/issues)
+- [GitHub 项目仓库](https://github.com/twhao/hexo-theme-milo)
+- [版本发布与下载](https://github.com/twhao/hexo-theme-milo/releases)
+- [提交问题与建议](https://github.com/twhao/hexo-theme-milo/issues)
 - [贡献指南](CONTRIBUTING.md)
 - [MIT 许可证](LICENSE)
 

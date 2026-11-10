@@ -33,9 +33,9 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/tanwenhaodotcom/hexo-theme-milo.git"
+    "url": "https://github.com/twhao/hexo-theme-milo.git"
   },
-  "homepage": "https://github.com/tanwenhaodotcom/hexo-theme-milo#readme",
+  "homepage": "https://github.com/twhao/hexo-theme-milo#readme",
   "dependencies": {
     "hexo-util": "^3.3.0 || ^4.0.0",
     "image-size": "^2.0.2"
