@@ -1,7 +1,7 @@
 'use strict';
 // 可选真实浏览器回归套件，依赖运行中的专用预览夹具。
 const fs=require('node:fs/promises'),path=require('node:path'),os=require('node:os'),cp=require('node:child_process'),assert=require('node:assert/strict');
-const site=new URL(process.env.MILO_PREVIEW_URL || 'http://localhost:4000/');
+const site=new URL(process.env.MILO_PREVIEW_URL || 'http://localhost:4001/');
 const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 let timeoutSnapshot;
 async function until(check,label){const started=Date.now();for(let i=0;i<100;i++){try{const value=await check();if(value)return value}catch(e){}await wait(100)}throw Error('Timeout: '+label+'; elapsed='+String(Date.now()-started)+'ms; state='+JSON.stringify(await timeoutSnapshot?.()))}
@@ -71,12 +71,12 @@ async function until(check,label){const started=Date.now();for(let i=0;i<100;i++
           await until(async()=>await evaluate(`(()=>{const toc=document.querySelector('.mobile-toc'),a=toc.querySelectorAll('a')[${index}],h=document.getElementById(decodeURIComponent(a.hash.slice(1))),top=h.getBoundingClientRect().top,bottom=document.querySelector('.topbar').getBoundingClientRect().bottom;return !toc.open && document.activeElement===h && a.getAttribute('aria-current')==='location' && top>=bottom && Math.abs(top-bottom-16)<2})()`),'nested TOC jump '+index).catch(async error=>{error.message+=' '+width+'px '+mode+' '+JSON.stringify(await evaluate(`(()=>{const a=document.querySelectorAll('.mobile-toc a')[${index}],h=document.getElementById(decodeURIComponent(a.hash.slice(1)));return {top:h.getBoundingClientRect().top,nav:document.querySelector('.topbar').getBoundingClientRect().bottom,current:a.getAttribute('aria-current'),focus:document.activeElement.id}})()`));throw error});
         }
       }else{
-        assert.ok(progress.width<200 && progress.height>20);assert.notEqual(progress.percent,'none');
+        assert.equal(progress.width,progress.viewportWidth);assert.equal(progress.height,3);assert.ok(Math.abs(progress.top-progress.nav)<1);assert.equal(progress.percent,'none');
         assert.equal(await evaluate('getComputedStyle(document.querySelector(".toc-sidebar")).display'),width<=900?'none':'block');
       }
       await evaluate("(()=>{const r=document.querySelector('#post-content').getBoundingClientRect(),offset=parseFloat(document.documentElement.style.getPropertyValue('--reading-offset')),distance=r.height-Math.max(0,innerHeight-offset);scrollTo({top:scrollY+r.top-offset+distance/2,behavior:'instant'})})()");
       await until(async()=>await evaluate('document.querySelector("progress").value===50'),'reading midpoint');
-      if(mobile)assert.ok(await evaluate("Math.abs(document.querySelector('.reading-progress').getBoundingClientRect().top-document.querySelector('.topbar').getBoundingClientRect().bottom)<1"));
+      assert.ok(await evaluate("Math.abs(document.querySelector('.reading-progress').getBoundingClientRect().top-document.querySelector('.topbar').getBoundingClientRect().bottom)<1"));
       await screenshot('milo-top-progress-'+width+'-'+mode);
       await evaluate('scrollTo({top:document.body.scrollHeight,behavior:"instant"})');
       await until(async()=>await evaluate('document.querySelector("progress").value===100'),'reading progress');
@@ -112,7 +112,7 @@ async function until(check,label){const started=Date.now();for(let i=0;i<100;i++
       assert.equal(await evaluate('document.querySelector("#post-content img[data-no-lightbox]").classList.contains("lightbox-image")'),false);
       await navigate('posts/short-note/');
       await until(async()=>await evaluate('document.querySelector("progress").value===100'),'short article fully visible');
-      if(mobile)assert.ok(await evaluate("Math.abs(document.querySelector('.reading-progress').getBoundingClientRect().top-document.querySelector('.topbar').getBoundingClientRect().bottom)<1"));
+      assert.ok(await evaluate("Math.abs(document.querySelector('.reading-progress').getBoundingClientRect().top-document.querySelector('.topbar').getBoundingClientRect().bottom)<1"));
     }
     async function checkSearchWrap(width,mode){
       const post=posts.find(p=>p.url.endsWith('/posts/long-title/'));
@@ -145,6 +145,7 @@ async function until(check,label){const started=Date.now();for(let i=0;i<100;i++
         await navigate(route);
         const initial=await evaluate(`(()=>{scrollTo({top:0,behavior:'instant'});const aside=document.querySelector('.sidebar'),group=aside.querySelector('.sidebar-sticky'),profile=aside.querySelector('.profile'),sections=[...group.querySelectorAll('.side-section')],r=group.getBoundingClientRect();return {position:getComputedStyle(group).position,asideDisplay:getComputedStyle(aside).display,top:r.top,width:r.width,height:r.height,asideWidth:aside.getBoundingClientRect().width,parentHeight:aside.getBoundingClientRect().height,columnsHeight:document.querySelector('.columns').getBoundingClientRect().height,profileBottom:profile.getBoundingClientRect().bottom,firstTop:sections[0].getBoundingClientRect().top,gap:sections[1].getBoundingClientRect().top-sections[0].getBoundingClientRect().bottom,offset:Number.parseFloat(getComputedStyle(group).top),nav:document.querySelector('.topbar').getBoundingClientRect().bottom}})()`);
         if(width<=800){assert.equal(initial.position,'static');assert.equal(initial.asideDisplay,'none');continue}
+        if(route===''&&width<1024){assert.equal(initial.asideDisplay,'none');continue}
         assert.equal(initial.position,'sticky');assert.equal(initial.width,initial.asideWidth);assert.ok(Math.abs(initial.top-initial.profileBottom-30)<1);assert.ok(Math.abs(initial.firstTop-initial.top)<1);assert.ok(Math.abs(initial.gap-30)<1);assert.ok(Math.abs(initial.parentHeight-initial.columnsHeight)<1);assert.ok(initial.offset>=initial.nav+20);
         const off=await evaluate(`(()=>{const group=document.querySelector('.sidebar-sticky');group.classList.remove('is-sticky');const r=group.getBoundingClientRect();return {position:getComputedStyle(group).position,top:r.top,width:r.width,height:r.height}})()`);
         assert.equal(off.position,'static');assert.equal(off.top,initial.top);assert.equal(off.width,initial.width);assert.equal(off.height,initial.height);
@@ -201,11 +202,6 @@ async function until(check,label){const started=Date.now();for(let i=0;i<100;i++
     }
     async function checkCoverSizing(width,mode){
       await navigate('');
-      if(width>800){
-        const baseline=await evaluate(`(()=>{const first=document.querySelector('#main>.entry'),cover=first.querySelector('.cover'),profile=document.querySelector('.profile');return {delta:cover?cover.getBoundingClientRect().top-profile.getBoundingClientRect().top:null,others:[...document.querySelectorAll('.entry .cover')].filter(c=>c.closest('.entry')!==first).map(c=>getComputedStyle(c).alignSelf)}})()`);
-        if(baseline.delta!==null)assert.ok(Math.abs(baseline.delta)<1,'First cover aligns with author card');
-        for(const align of baseline.others)assert.equal(align,'center','Other article covers remain centered');
-      }
       const actual=await evaluate(`(()=>[...document.querySelectorAll('.entry .cover')].map(cover=>{const img=cover.querySelector('img'),r=cover.getBoundingClientRect(),i=img.getBoundingClientRect(),style=getComputedStyle(cover);return {container:r.height,image:i.height,width:r.width,align:style.alignSelf,parentAlign:getComputedStyle(cover.parentElement).alignItems,radius:style.borderRadius,overflow:style.overflow}}))()`);
       for(const item of actual)assert.ok(Math.abs(item.container-item.image)<1,'Actual cover stretched: '+JSON.stringify(item));
       const cases=await evaluate(`(async()=>{
@@ -213,7 +209,7 @@ async function until(check,label){const started=Date.now();for(let i=0;i<100;i++
         // 只改变文章内容，保留原滚动条。
         main.style.minHeight=main.getBoundingClientRect().height+'px';const first=document.createElement('article');first.className='entry';main.replaceChildren(first,entry);
         const copy=entry.querySelector('.entry-copy'),cover=entry.querySelector('.cover'),img=cover.querySelector('img');
-        const measure=()=>{const r=cover.getBoundingClientRect(),i=img.getBoundingClientRect(),c=copy.getBoundingClientRect(),e=entry.getBoundingClientRect(),style=getComputedStyle(cover),row=getComputedStyle(entry);return {width:r.width,height:r.height,imageHeight:i.height,top:r.top,imageTop:i.top,copyTop:c.top,copyHeight:c.height,copyWidth:c.width,titleWidth:copy.querySelector('h2').getBoundingClientRect().width,titleBottom:copy.querySelector('h2').getBoundingClientRect().bottom,summaryTop:copy.querySelector('p').getBoundingClientRect().top,coverBottom:r.bottom,left:r.left,align:style.alignSelf,overflow:style.overflow,radii:[style.borderTopLeftRadius,style.borderTopRightRadius,style.borderBottomLeftRadius,style.borderBottomRightRadius],fit:getComputedStyle(img).objectFit,rowHeight:e.height,expectedHeight:Math.max(c.height,r.height)+parseFloat(row.paddingBottom)+parseFloat(row.borderBottomWidth),gap:row.gap,padding:row.paddingBottom,margin:row.marginBottom}};
+        const measure=()=>{const r=cover.getBoundingClientRect(),i=img.getBoundingClientRect(),c=copy.getBoundingClientRect(),e=entry.getBoundingClientRect(),style=getComputedStyle(cover),row=getComputedStyle(entry);return {width:r.width,height:r.height,imageHeight:i.height,top:r.top,imageTop:i.top,copyTop:c.top,copyHeight:c.height,copyWidth:c.width,titleWidth:copy.querySelector('h2').getBoundingClientRect().width,titleBottom:copy.querySelector('h2').getBoundingClientRect().bottom,summaryTop:copy.querySelector('p').getBoundingClientRect().top,summaryHeight:copy.querySelector('p').getBoundingClientRect().height,coverBottom:r.bottom,left:r.left,align:style.alignSelf,overflow:style.overflow,radii:[style.borderTopLeftRadius,style.borderTopRightRadius,style.borderBottomLeftRadius,style.borderBottomRightRadius],fit:getComputedStyle(img).objectFit,rowHeight:e.height,expectedHeight:Math.max(c.height,r.height)+parseFloat(row.paddingBottom)+parseFloat(row.borderBottomWidth),gap:row.gap,padding:row.paddingBottom,margin:row.marginBottom}};
         const results=[];
         for(const fit of ['cover','contain'])for(const [w,h] of [[1200,400],[300,900],[600,600]]){
           cover.classList.toggle('cover-contain',fit==='contain');
@@ -229,10 +225,10 @@ async function until(check,label){const started=Date.now();for(let i=0;i<100;i++
       })()`);
       assert.ok(actual.length>0);assert.equal(cases.viewport,width);assert.ok(cases.overflow<=width);assert.equal(cases.noCover.count,0);assert.equal(cases.noCover.overflow,true);
       for(const {fit,variants} of cases.results){const first=variants[0];for(const item of variants){
-        assert.equal(item.align,width>800?'center':'flex-start');assert.equal(item.fit,fit);assert.equal(item.overflow,'hidden');assert.ok(item.radii.every(r=>parseFloat(r)>0));
+        assert.equal(item.align,'center');assert.equal(item.fit,fit);assert.equal(item.overflow,'hidden');assert.ok(item.radii.every(r=>parseFloat(r)>0));
         assert.ok(Math.abs(item.height-item.imageHeight)<1);assert.ok(Math.abs(item.top-item.imageTop)<1);assert.ok(Math.abs(item.width/item.height-16/10)<0.02);
         if(width<=800){assert.ok(Math.abs(item.width-item.copyWidth)<1);assert.ok(Math.abs(item.titleWidth-item.copyWidth)<1);assert.ok(item.top>=item.titleBottom+13);assert.ok(item.summaryTop>=item.coverBottom+13)}
-        if(width>800)assert.ok(Math.abs(item.top-(item.copyTop+(item.copyHeight-item.height)/2))<1,'Desktop cover vertical alignment');
+        if(width>800){assert.ok(Math.abs(item.titleWidth-item.copyWidth)<1,'Title uses full row');assert.ok(item.top>=item.titleBottom-1,'Cover below title');assert.ok(Math.abs(item.top+item.height/2-item.summaryTop-item.summaryHeight/2)<1,'Cover centered with summary');}
         for(const key of ['width','height','left','gap','padding','margin'])assert.equal(item[key],first[key],key+' varies with copy length');
         assert.ok(Math.abs(item.rowHeight-item.expectedHeight)<1,'Row should size naturally');
       }}
@@ -353,9 +349,9 @@ async function until(check,label){const started=Date.now();for(let i=0;i<100;i++
         await evaluate('localStorage.setItem("milo-appearance",'+JSON.stringify(mode)+')');
         await navigate('');
         const layout=await evaluate(`(()=>{const entry=document.querySelector('.entry'),r=entry.getBoundingClientRect(),profile=document.querySelector('.profile'),nav=document.querySelector('.topbar').getBoundingClientRect(),identity=document.querySelector('.mobile-identity'),visible=identity&&getComputedStyle(identity).display!=='none';return {heading:!!document.querySelector('#main .page-heading'),first:document.querySelector('#main>h1').nextElementSibling===entry,gap:r.top-nav.bottom,identityHeight:visible?identity.getBoundingClientRect().height:0,identityGap:visible?parseFloat(getComputedStyle(document.querySelector('.columns')).rowGap):0,aligned:Math.abs(r.top-profile.getBoundingClientRect().top),width:innerWidth,overflow:document.documentElement.scrollWidth}})()`);
-        assert.equal(layout.heading,false);assert.equal(layout.first,true);if(layout.identityHeight)assert.equal(layout.identityGap,20);
-        assert.ok(Math.abs(layout.gap-(width<=800?34+layout.identityHeight+layout.identityGap:56))<1);
-        if(width>800)assert.ok(layout.aligned<1,'First article and author card align');
+        assert.equal(layout.heading,false);assert.equal(layout.first,true);assert.equal(layout.identityHeight>0,width<1024);if(layout.identityHeight)assert.equal(layout.identityGap,20);
+        assert.ok(Math.abs(layout.gap-((width<=800?34:56)+layout.identityHeight+layout.identityGap))<1);
+        if(width>=1024)assert.ok(layout.aligned<1,'First article and author card align');
         assert.equal(layout.width,width);assert.ok(layout.overflow<=width);
         await checkHomeHeading(1);
         await screenshot('milo-home-no-heading-'+width+'-'+mode);

@@ -1,20 +1,16 @@
 # Milo
 
-**一款简洁、轻量、注重阅读体验的 Hexo 博客主题。**
+Milo 是一款轻量的 Hexo 博客主题，适合以文章阅读为主的个人博客。它会随屏幕宽度调整布局，提供浅色与深色外观、站内搜索、文章目录和阅读进度，也可按需开启评论、订阅和图片灯箱。
 
-**[Live Demo · 在线演示](https://demo.tanwenhao.com)**
-
-[![版本](https://img.shields.io/badge/版本-v0.4.0--pre--release-informational)](https://github.com/twhao/hexo-theme-milo/releases/tag/v0.4.0) · [下载与版本记录](https://github.com/twhao/hexo-theme-milo/releases) · [反馈问题](https://github.com/twhao/hexo-theme-milo/issues)
+[在线演示](https://demo.tanwenhao.com) · [版本下载](https://github.com/twhao/hexo-theme-milo/releases) · [安装与启用](#安装与启用) · [更新记录](CHANGELOG.md)
 
 ![Milo 主题首页预览，浅色模式](docs/images/milo-preview-light.png)
 
-> 预览图来自 Milo 本地测试站点的实际 HTML 页面及配套资源，展示的是开发中的界面。预发布版本的外观或细节可能有所不同；图片中的文章、头像均为示例内容。
+> 截图使用示例内容，实际界面以你安装的版本为准。
 
-Milo 使用 **EJS、原生 CSS 与 JavaScript**，无前端框架。提供响应式双栏首页、浅色／深色模式、站内搜索、文章目录、阅读进度、归档、分类、标签，以及可选评论和图片灯箱。
+开始前，请准备一个可以正常生成页面的 Hexo 博客。首次搭建博客可参考 [Hexo 官方文档](https://hexo.io/zh-cn/docs/)。
 
-**本文是 Milo 的使用说明，不是 Hexo 入门教程。** 只需已有一个可以正常生成的 Hexo 博客，就能按照以下步骤启用 Milo。还没安装 Hexo？请先参考 [Hexo 官方文档](https://hexo.io/zh-cn/docs/)。
-
-**兼容性：** 已在 Node.js 26.13.0、Hexo 8.1.2 下验证。Milo 自身声明 Node.js ≥ 18，但 Hexo 8.1.2 要求 Node.js ≥ 20.19；应同时满足实际 Hexo 版本及插件的环境要求。其他版本尚未完整验证。
+**兼容性**　已在 Node.js 26.13.0 和 Hexo 8.1.2 下验证。Milo 要求 Node.js 18 或更高版本，Hexo 8.1.2 要求 Node.js 20.19 或更高版本。请同时满足所用 Hexo 和插件的要求。其他版本尚未完整验证。
 
 ## 目录
 
@@ -28,6 +24,7 @@ Milo 使用 **EJS、原生 CSS 与 JavaScript**，无前端框架。提供响应
 - [常用命令](#常用命令)
 - [更新与卸载](#更新与卸载)
 - [常见问题](#常见问题)
+- [项目与许可证](#项目与许可证)
 
 ## 安装与启用
 
@@ -41,11 +38,11 @@ npm install --prefix themes/milo --omit=dev
 npm install hexo-renderer-ejs hexo-renderer-marked hexo-generator-index hexo-generator-archive hexo-generator-category hexo-generator-tag
 ```
 
-第一行下载主题到 `themes/milo`；第二行安装 Milo 构建期所需依赖；第三行确保站点安装了 Milo 使用的渲染器及页面生成器。**这些命令均在博客根目录执行。**
+第一行下载主题，第二行安装主题依赖，第三行安装站点需要的渲染器和页面生成器。这三条命令都在博客根目录执行。
 
-如果不使用 Git，也可到 [Releases](https://github.com/twhao/hexo-theme-milo/releases) 下载主题压缩包，解压后将主题文件放进 `themes/milo/`，再执行上面的两条 `npm install` 命令。确保 `_config.yml`、`layout/`、`scripts/` 等文件就在 `themes/milo/` 下，而不是多嵌套了一层文件夹。
+也可以下载指定版本的源代码压缩包。解压后，将包含 `_config.yml`、`layout/` 和 `scripts/` 的主题文件直接放入 `themes/milo/`，然后在博客根目录执行上面两条 `npm install` 命令。请从 [版本发布页](https://github.com/twhao/hexo-theme-milo/releases) 选择版本。
 
-> **版本提示：** `git clone` 默认取得仓库当前分支内容，可能包含尚未正式发布的改动。希望使用指定版本，可参照 [v0.4.0 预发布说明](https://github.com/twhao/hexo-theme-milo/releases/tag/v0.4.0) 下载对应源代码。当前项目仍为 Pre-release。
+> **如何选版本**　上述 Git 命令下载默认分支，其中可能包含开发中的改动。需要固定版本时，请下载对应的压缩包，并在版本发布页确认它是预发布还是正式版。
 
 ### 2. 在 Hexo 中选择 Milo
 
@@ -189,7 +186,7 @@ head:
 
 Milo 已提供这些页面的布局；其中**搜索、标签、分类、关于页**建议按下面的文件路径建立页面，以显示对应内容。
 
-在 `themes/milo/examples/pages/` 中找到示例文件，将其复制到**博客根目录的 `source/`**：
+下表列出示例文件和复制位置。请从 `themes/milo/examples/pages/` 取用示例，复制到**博客根目录的 `source/`**。
 
 | 复制来源（主题目录内） | 复制目标（博客 `source/` 下） | 页面地址 |
 | --- | --- | --- |
@@ -208,9 +205,9 @@ comments: false
 ---
 ```
 
-**请保留 `layout` 字段**，这是 Milo 识别页面类型的关键。关于页可在文件的第二个 `---` 下方直接用 Markdown 写个人介绍。归档页由已安装的 Hexo 归档生成器生成，通常不必手动创建。
+**请保留 `layout` 字段**，Hexo 会用它选择对应的页面布局。关于页可在文件的第二个 `---` 下方直接用 Markdown 写个人介绍。归档页由已安装的 Hexo 归档生成器生成，通常不必手动创建。
 
-搜索使用本地静态索引，点击导航栏搜索图标后输入关键词并按 Enter；无需配置第三方搜索服务。关闭 `search.enable` 时，搜索入口和索引会一起关闭。
+点击导航栏的搜索图标，输入关键词并按 Enter 即可搜索站内文章。此功能无需第三方搜索服务。关闭 `search.enable` 时，搜索入口和索引会一起关闭。
 
 ## 文章封面与专属参数
 
@@ -348,7 +345,7 @@ npm run test:browser # 主题浏览器测试
 **更新前请备份**博客根目录的 `_config.milo.yml`，以及任何直接修改过的主题源文件。
 
 - **Git 安装、跟随默认分支：** 在博客根目录执行 `git -C themes/milo pull --ff-only`，然后执行 `npm install --prefix themes/milo --omit=dev`。如果主题处于标签（detached HEAD）或存在本地修改，请不要直接运行 `pull`。
-- **安装了指定 Release：** 到 [Releases](https://github.com/twhao/hexo-theme-milo/releases) 获取希望升级到的版本，按版本说明更换主题文件，并重新安装主题依赖。不要将主分支自动更新误认为固定版本升级。
+- **通过压缩包安装：** 到 [版本发布页](https://github.com/twhao/hexo-theme-milo/releases) 获取希望升级到的版本，按版本说明更换主题文件，并重新安装主题依赖。不要将主分支自动更新误认为固定版本升级。
 - **卸载：** 先在博客站点 `_config.yml` 中切换到其他已安装主题，再删除 `themes/milo/`。`_config.milo.yml` 可自行保留或移除；博客文章不会因为卸载 Milo 而删除。
 
 ## 常见问题
@@ -392,7 +389,7 @@ Milo 可以生成 `404.html`，但是否返回 HTTP 404 以及如何展示，取
 ## 项目与许可证
 
 - [GitHub 项目仓库](https://github.com/twhao/hexo-theme-milo)
-- [版本发布与下载](https://github.com/twhao/hexo-theme-milo/releases)
+- [版本下载](https://github.com/twhao/hexo-theme-milo/releases)
 - [提交问题与建议](https://github.com/twhao/hexo-theme-milo/issues)
 - [贡献指南](CONTRIBUTING.md)
 - [MIT 许可证](LICENSE)
