@@ -4,7 +4,7 @@ Milo 是一款轻量的 Hexo 博客主题，适合以文章阅读为主的个人
 
 [在线演示](https://demo.tanwenhao.com) · [版本下载](https://github.com/twhao/hexo-theme-milo/releases) · [安装与启用](#安装与启用) · [更新记录](CHANGELOG.md)
 
-![Milo 主题首页预览，浅色模式](docs/images/milo-preview-light.png)
+![Milo 主题首页预览，浅色模式](docs/images/milo-demo-desktop.png)
 
 > 截图使用示例内容，实际界面以你安装的版本为准。
 
